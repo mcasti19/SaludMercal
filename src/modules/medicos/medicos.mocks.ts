@@ -22,6 +22,9 @@ export const MOCK_MEDICOS: Medico[] = [
     telefono: "0414-1234567",
     email: "carlos.rodriguez@mercal.gob.ve",
     activo: true,
+    diasLaborables: [1, 2, 3, 4, 5],
+    horaInicio: "08:00",
+    horaFin: "12:00",
   },
   {
     id: "MED002",
@@ -34,6 +37,9 @@ export const MOCK_MEDICOS: Medico[] = [
     telefono: "0424-2345678",
     email: "ana.martinez@mercal.gob.ve",
     activo: true,
+    diasLaborables: [1, 3, 5],
+    horaInicio: "08:00",
+    horaFin: "12:00",
   },
   {
     id: "MED003",
@@ -46,6 +52,9 @@ export const MOCK_MEDICOS: Medico[] = [
     telefono: "0416-3456789",
     email: "jose.hernandez@mercal.gob.ve",
     activo: true,
+    diasLaborables: [2, 4],
+    horaInicio: "13:00",
+    horaFin: "17:00",
   },
   {
     id: "MED004",
@@ -58,6 +67,9 @@ export const MOCK_MEDICOS: Medico[] = [
     telefono: "0412-4567890",
     email: "gabriela.lopez@mercal.gob.ve",
     activo: true,
+    diasLaborables: [1, 2, 3, 4, 5],
+    horaInicio: "08:00",
+    horaFin: "14:00",
   },
   {
     id: "MED005",
@@ -70,6 +82,9 @@ export const MOCK_MEDICOS: Medico[] = [
     telefono: "0426-5678901",
     email: "fernando.torres@mercal.gob.ve",
     activo: false,
+    diasLaborables: [3, 5],
+    horaInicio: "13:00",
+    horaFin: "17:00",
   },
   {
     id: "MED006",
@@ -82,6 +97,9 @@ export const MOCK_MEDICOS: Medico[] = [
     telefono: "0414-6789012",
     email: "sofia.ramirez@mercal.gob.ve",
     activo: true,
+    diasLaborables: [1, 2, 4],
+    horaInicio: "08:00",
+    horaFin: "12:00",
   },
   {
     id: "MED007",
@@ -94,5 +112,8 @@ export const MOCK_MEDICOS: Medico[] = [
     telefono: "0424-7890123",
     email: "ricardo.moreno@mercal.gob.ve",
     activo: true,
+    diasLaborables: [1, 5],
+    horaInicio: "14:00",
+    horaFin: "18:00",
   },
 ];

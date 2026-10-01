@@ -57,6 +57,7 @@ export const medicoSchema = z.object({
   nombre: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),
   apellido: z.string().min(2, "El apellido debe tener al menos 2 caracteres"),
   especialidadId: z.string().min(1, "Seleccione una especialidad"),
+  diasLaborables: z.array(z.number()).min(1, "Seleccione al menos un día laborable"),
   turno: z.enum(["MANANA", "TARDE", "NOCTURNO"]),
   horaInicio: z.string().optional(),
   horaFin: z.string().optional(),

@@ -7,6 +7,17 @@ import { X, Upload, UserCircle2 } from "lucide-react";
 import { medicoSchema, MedicoFormValues } from "@/lib/schemas";
 import { useMedicosStore } from "./medicos.store";
 import { TURNOS_CONFIG } from "@/lib/constants";
+import { cn } from "@/lib/utils";
+
+const DIAS_SEMANA = [
+  { value: 1, label: "Lun" },
+  { value: 2, label: "Mar" },
+  { value: 3, label: "Mié" },
+  { value: 4, label: "Jue" },
+  { value: 5, label: "Vie" },
+  { value: 6, label: "Sáb" },
+  { value: 0, label: "Dom" },
+];
 
 interface Props {
   open: boolean;
@@ -32,12 +43,12 @@ export function NuevoMedicoModal({ open, onClose }: Props) {
     formState: { errors, isSubmitting },
   } = useForm<MedicoFormValues>({
     resolver: zodResolver(medicoSchema),
-    defaultValues: { activo: true },
+    defaultValues: { activo: true, diasLaborables: [1, 2, 3, 4, 5] },
   });
 
   useEffect(() => {
     if (!open) {
-      reset({ activo: true });
+      reset({ activo: true, diasLaborables: [1, 2, 3, 4, 5] });
       setFotoPreview(null);
     }
   }, [open, reset]);
@@ -170,6 +181,38 @@ export function NuevoMedicoModal({ open, onClose }: Props) {
                 ))}
               </select>
               {errors.turno && <p className={errorCls}>{errors.turno.message}</p>}
+            </div>
+
+            {/* Días Laborables */}
+            <div>
+              <label className={labelCls}>Días Laborables *</label>
+              <div className="flex flex-wrap gap-2 mt-1">
+                {DIAS_SEMANA.map((dia) => {
+                  const currentDias = watch("diasLaborables") || [];
+                  const isSelected = currentDias.includes(dia.value);
+                  return (
+                    <button
+                      key={dia.value}
+                      type="button"
+                      onClick={() => {
+                        const newDias = isSelected
+                          ? currentDias.filter((d) => d !== dia.value)
+                          : [...currentDias, dia.value];
+                        setValue("diasLaborables", newDias, { shouldValidate: true });
+                      }}
+                      className={cn(
+                        "px-3 py-1.5 rounded-lg text-sm font-medium transition-colors border",
+                        isSelected
+                          ? "bg-emerald-500 text-white border-emerald-500 shadow-md shadow-emerald-500/20"
+                          : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-emerald-500/50"
+                      )}
+                    >
+                      {dia.label}
+                    </button>
+                  );
+                })}
+              </div>
+              {errors.diasLaborables && <p className={errorCls}>{errors.diasLaborables.message}</p>}
             </div>
 
             {/* Horario personalizado */}

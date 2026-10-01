@@ -64,7 +64,7 @@ export default function PortalDashboard() {
           <HeartPulse className="w-8 h-8" />
         </div>
         <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-2">
-          Portal del Empleado — Fase 3 Lista
+          Portal del Empleado
         </h2>
         <p className="text-slate-500 dark:text-slate-400 text-sm max-w-lg mx-auto">
           Ya puedes navegar por el menú lateral para gestionar tus propias citas médicas y cargar reposos para que el equipo administrativo los verifique.

@@ -45,6 +45,7 @@ export interface Medico {
   apellido: string;
   especialidadId: string;
   especialidadNombre: string;
+  diasLaborables: number[]; // 0=Dom, 1=Lun, 2=Mar, 3=Mie, 4=Jue, 5=Vie, 6=Sab
   turno: "MANANA" | "TARDE" | "NOCTURNO";
   horaInicio?: string; // HH:mm
   horaFin?: string;    // HH:mm
