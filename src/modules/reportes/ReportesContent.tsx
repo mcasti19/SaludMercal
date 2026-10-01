@@ -6,6 +6,7 @@ import { useMedicosStore } from "@/modules/medicos/medicos.store";
 import { CITA_ESTADO_CONFIG } from "@/lib/constants";
 import { CitaEstado } from "@/types";
 import { BarChart3, TrendingUp, Activity } from "lucide-react";
+import { MOCK_ESPECIALIDADES } from "../medicos/medicos.mocks";
 
 const ESTADOS: CitaEstado[] = ["PENDIENTE", "CONFIRMADA", "EN_ATENCION", "COMPLETADA", "CANCELADA"];
 
@@ -84,12 +85,11 @@ export function ReportesContent() {
                   </div>
                   <div className="h-2 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
                     <div
-                      className={`h-full rounded-full transition-all duration-700 ${
-                        estado === "COMPLETADA" ? "bg-emerald-500" :
-                        estado === "PENDIENTE" ? "bg-amber-500" :
-                        estado === "CONFIRMADA" ? "bg-blue-500" :
-                        estado === "EN_ATENCION" ? "bg-violet-500" : "bg-red-500"
-                      }`}
+                      className={`h-full rounded-full transition-all duration-700 ${estado === "COMPLETADA" ? "bg-emerald-500" :
+                          estado === "PENDIENTE" ? "bg-amber-500" :
+                            estado === "CONFIRMADA" ? "bg-blue-500" :
+                              estado === "EN_ATENCION" ? "bg-violet-500" : "bg-red-500"
+                        }`}
                       style={{ width: `${pct}%` }}
                     />
                   </div>
