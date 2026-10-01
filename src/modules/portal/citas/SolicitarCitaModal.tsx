@@ -36,7 +36,6 @@ export function SolicitarCitaModal({ open, onClose }: Props) {
     },
   });
 
-  const watchEspecialidad = watch("especialidad", selectedEspecialidad);
 
   useEffect(() => {
     if (!open) {
@@ -51,12 +50,16 @@ export function SolicitarCitaModal({ open, onClose }: Props) {
     // El empleado SIEMPRE se pide a sí mismo, pero debemos buscar si ya está en pacientes?
     // Para simplificar, crearemos la cita con sus datos de AuthUser
     // The backend would handle creating the patient if it doesn't exist
-    
+    const selectedMedico = medicos.find(m => m.id === data.medicoId);
+    const selectedEspecialidadObj = especialidades.find(e => e.id === selectedEspecialidad);
+
     addCita({
       pacienteId: user.id,
       pacienteNombre: `${user.nombre} ${user.apellido}`,
       pacienteCedula: user.cedula,
       medicoId: data.medicoId,
+      medicoNombre: selectedMedico ? `${selectedMedico.nombre} ${selectedMedico.apellido}` : "",
+      especialidad: selectedEspecialidadObj?.nombre || "",
       fecha: data.fecha,
       hora: data.hora,
       motivo: data.motivo,

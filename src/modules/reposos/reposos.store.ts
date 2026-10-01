@@ -4,7 +4,7 @@ import { Reposo, ReposoEstado } from "@/types";
 
 interface RepososState {
   reposos: Reposo[];
-  addReposo: (reposo: Omit<Reposo, "id" | "creadoEn" | "estado">) => void;
+  addReposo: (reposo: Omit<Reposo, "id" | "creadoEn" | "estado" | "dias">) => void;
   updateEstado: (id: string, estado: ReposoEstado, notasAdmin?: string) => void;
   deleteReposo: (id: string) => void;
 }

@@ -55,8 +55,10 @@ export function NuevoMedicoModal({ open, onClose }: Props) {
   };
 
   const onSubmit = (data: MedicoFormValues) => {
+    const especialidadObj = especialidades.find(e => e.id === data.especialidadId);
     addMedico({
       ...data,
+      especialidadNombre: especialidadObj?.nombre || "",
       cedula: data.cedula || undefined,
       telefono: data.telefono || undefined,
       email: data.email || undefined,

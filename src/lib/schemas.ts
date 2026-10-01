@@ -28,7 +28,7 @@ export const pacienteSchema = z.object({
     .regex(/^0\d{3}-\d{7}$/, "Formato válido: 0414-1234567"),
   email: z.string().email("Ingrese un email válido"),
   fechaNacimiento: z.string().min(1, "La fecha de nacimiento es obligatoria"),
-  estado: z.enum(["ACTIVO", "INACTIVO"]).default("ACTIVO"),
+  estado: z.enum(["ACTIVO", "INACTIVO"]),
 });
 
 export type PacienteFormValues = z.infer<typeof pacienteSchema>;
@@ -40,9 +40,7 @@ export const citaSchema = z.object({
   fecha: z.string().min(1, "La fecha es obligatoria"),
   hora: z.string().min(1, "La hora es obligatoria"),
   motivo: z.string().min(5, "Describa brevemente el motivo (mín. 5 caracteres)"),
-  estado: z
-    .enum(["PENDIENTE", "CONFIRMADA", "EN_ATENCION", "COMPLETADA", "CANCELADA"])
-    .default("PENDIENTE"),
+  estado: z.enum(["PENDIENTE", "CONFIRMADA", "EN_ATENCION", "COMPLETADA", "CANCELADA"]),
   notas: z.string().optional(),
 });
 
@@ -59,9 +57,7 @@ export const medicoSchema = z.object({
   nombre: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),
   apellido: z.string().min(2, "El apellido debe tener al menos 2 caracteres"),
   especialidadId: z.string().min(1, "Seleccione una especialidad"),
-  turno: z.enum(["MANANA", "TARDE", "NOCTURNO"], {
-    required_error: "Seleccione un turno",
-  }),
+  turno: z.enum(["MANANA", "TARDE", "NOCTURNO"]),
   horaInicio: z.string().optional(),
   horaFin: z.string().optional(),
   cubiculo: z.string().min(1, "El cubículo es obligatorio"),
@@ -77,7 +73,7 @@ export const medicoSchema = z.object({
     .refine((v) => !v || z.string().email().safeParse(v).success, {
       message: "Ingrese un email válido",
     }),
-  activo: z.boolean().default(true),
+  activo: z.boolean(),
   fotoPerfil: z.string().optional(),
 });
 
@@ -89,9 +85,7 @@ export const reposoSchema = z.object({
   fechaFin: z.string().min(1, "La fecha de fin es obligatoria"),
   diagnostico: z.string().min(5, "Describa brevemente el diagnóstico (mín. 5 caracteres)"),
   medicoTratante: z.string().min(3, "Indique el médico tratante"),
-  tipo: z.enum(["LABORAL", "ACCIDENTE", "ENFERMEDAD", "MATERNIDAD"], {
-    required_error: "Seleccione el tipo de reposo",
-  }),
+  tipo: z.enum(["LABORAL", "ACCIDENTE", "ENFERMEDAD", "MATERNIDAD"]),
   adjuntoBase64: z.string().optional(),
 });
 
