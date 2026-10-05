@@ -1,19 +1,9 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import {
-  LayoutDashboard,
-  CalendarClock,
-  Users,
-  Stethoscope,
-  BarChart3,
-  Cross,
-  FileBox,
-} from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
@@ -21,10 +11,20 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarFooter,
   useSidebar,
 } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
+import {
+  BarChart3,
+  CalendarClock,
+  Cross,
+  FileBox,
+  LayoutDashboard,
+  Stethoscope,
+  Users,
+} from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 const NAV_ITEMS = [
   {
@@ -76,10 +76,13 @@ export function AppSidebar() {
   };
 
   return (
-    <Sidebar className="border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900" collapsible="icon">
-      <SidebarHeader className="p-4 border-b border-slate-200 dark:border-slate-800">
+    <Sidebar
+      className="border-r border-slate-200 dark:border-slate-900"
+      collapsible="icon"
+    >
+      <SidebarHeader className="p-4 border-slate-200">
         <div className="flex items-center gap-3">
-          <div className="flex items-center justify-center w-8 h-8 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 shadow-lg shadow-blue-500/20 shrink-0">
+          <div className="flex items-center justify-center w-8 h-8 rounded-xl bg-linear-to-br from-blue-500 to-cyan-500 shadow-lg shadow-blue-500/20 shrink-0">
             <Cross className="w-4 h-4 text-white" />
           </div>
           {!collapsed && (
@@ -87,7 +90,9 @@ export function AppSidebar() {
               <p className="text-slate-900 dark:text-white font-bold text-sm leading-tight truncate">
                 SaludMercal
               </p>
-              <p className="text-slate-500 dark:text-slate-400 text-xs truncate">Sistema Médico</p>
+              <p className="text-slate-500 dark:text-slate-400 text-xs truncate">
+                Sistema Médico
+              </p>
             </div>
           )}
         </div>
@@ -111,10 +116,10 @@ export function AppSidebar() {
                       isActive={active}
                       tooltip={item.label}
                       className={cn(
-                        "transition-all duration-200",
+                        "transition-all duration-200 uppercase",
                         active
-                          ? "bg-blue-50 dark:bg-gradient-to-r dark:from-blue-600/30 dark:to-cyan-600/20 text-blue-600 dark:text-blue-300 hover:text-blue-700 dark:hover:text-blue-200 hover:bg-blue-100 dark:hover:bg-blue-600/30"
-                          : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800"
+                          ? "bg-blue-50 dark:bg-linear-to-r dark:from-blue-600/30 dark:to-cyan-600/20 text-blue-600 dark:text-blue-300 hover:text-blue-700 dark:hover:text-blue-200 hover:bg-blue-100 dark:hover:bg-blue-600/30"
+                          : "text-white hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800",
                       )}
                     >
                       <Link href={item.href}>
@@ -123,7 +128,7 @@ export function AppSidebar() {
                             "w-4 h-4 shrink-0 transition-colors",
                             active
                               ? "text-blue-500 dark:text-blue-400"
-                              : "text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300"
+                              : "text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300",
                           )}
                         />
                         <span>{item.label}</span>
