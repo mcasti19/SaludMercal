@@ -224,7 +224,6 @@ export function SolicitarCitaModal({ open, onClose }: Props) {
                             day: "hover:bg-emerald-50 dark:hover:bg-emerald-500/20 rounded-md transition-colors",
                             today: "bg-slate-100 dark:bg-slate-800 font-bold",
                           }}
-                          initialFocus
                           locale={es}
                         />
                       </PopoverContent>

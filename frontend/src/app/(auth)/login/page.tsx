@@ -4,10 +4,10 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Eye, EyeOff, Stethoscope, AlertCircle } from "lucide-react";
+import { Eye, EyeOff, AlertCircle, User, Lock, HeartPulse, ShieldCheck, Activity } from "lucide-react";
 import { useAuthStore, getRedirectPath } from "@/modules/auth/auth.store";
 import { loginSchema, LoginFormValues } from "@/lib/schemas";
-import { DEMO_CREDENTIALS, DEMO_EMPLEADO_CREDENTIALS } from "@/modules/auth/auth.mocks";
+import Image from "next/image";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -18,14 +18,13 @@ export default function LoginPage() {
     register,
     handleSubmit,
     formState: { errors },
-    setValue,
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
-    defaultValues: { cedula: "", password: "" },
+    defaultValues: { login: "", password: "" },
   });
 
   const onSubmit = async (data: LoginFormValues) => {
-    const success = await login(data.cedula, data.password);
+    const success = await login(data.login, data.password);
     if (success) {
       const user = useAuthStore.getState().user;
       if (user) {
@@ -36,78 +35,170 @@ export default function LoginPage() {
     }
   };
 
-  const fillDemo = () => {
-    setValue("cedula", DEMO_CREDENTIALS.cedula);
-    setValue("password", DEMO_CREDENTIALS.password);
-    clearError();
-  };
-
   return (
-    <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-slate-50 dark:bg-gradient-to-br dark:from-slate-900 dark:via-blue-950 dark:to-slate-900">
-      {/* Background decorations */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-96 h-96 rounded-full bg-blue-500/10 blur-3xl" />
-        <div className="absolute -bottom-40 -left-40 w-96 h-96 rounded-full bg-cyan-500/10 blur-3xl" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-blue-600/5 blur-3xl" />
+    <div className="min-h-screen flex overflow-hidden">
+      {/* ── PANEL IZQUIERDO ── */}
+      <div className="relative hidden lg:flex lg:w-3/5 flex-col justify-between overflow-hidden">
+        {/* Imagen de fondo */}
+        <Image
+          src="/fondoLogin.webp"
+          alt="Fondo SaludMercal"
+          fill
+          priority
+          className="object-cover object-center"
+        />
+
+        {/* Overlay degradado azul profundo */}
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-950/90 via-blue-900/80 to-cyan-900/70" />
+
+        {/* Blobs decorativos */}
+        <div className="absolute -top-32 -left-32 w-96 h-96 rounded-full bg-blue-500/20 blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-32 -right-32 w-96 h-96 rounded-full bg-cyan-400/15 blur-3xl pointer-events-none" />
+
+        {/* Contenido */}
+        <div className="relative z-10 flex flex-col justify-between h-full p-10 xl:p-14">
+          {/* Parte superior: Logo */}
+          <div className="flex items-center gap-3">
+            <div className="flex items-center justify-center w-11 h-11 rounded-xl bg-white/15 backdrop-blur-sm border border-white/20 shadow-lg">
+              <HeartPulse className="w-6 h-6 text-cyan-300" />
+            </div>
+            <div>
+              <span className="text-white font-bold text-lg tracking-tight leading-none">
+                SaludMercal
+              </span>
+              <p className="text-blue-200/70 text-xs leading-none mt-0.5">
+                Sistema de Gestión de Salud
+              </p>
+            </div>
+          </div>
+
+          {/* Centro: Titular principal */}
+          <div className="space-y-6">
+            <div className="space-y-4">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-cyan-400/15 border border-cyan-400/25 backdrop-blur-sm">
+                <Activity className="w-3.5 h-3.5 text-cyan-300" />
+                <span className="text-cyan-200 text-xs font-medium tracking-wide uppercase">
+                  Plataforma Oficial Mercal
+                </span>
+              </div>
+              <h1 className="text-4xl xl:text-5xl font-bold text-white leading-tight tracking-tight">
+                Tu salud,{" "}
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-blue-300">
+                  nuestra misión
+                </span>
+              </h1>
+              <p className="text-blue-100/80 text-lg leading-relaxed max-w-md">
+                Gestionamos tus citas médicas con tecnología al servicio del
+                bienestar de toda la familia venezolana.
+              </p>
+            </div>
+
+            {/* Feature pills */}
+            <div className="flex flex-wrap gap-3">
+              {[
+                { icon: ShieldCheck, label: "Atención Segura" },
+                { icon: Activity, label: "Seguimiento en Tiempo Real" },
+                { icon: HeartPulse, label: "Cuidado Integral" },
+              ].map(({ icon: Icon, label }) => (
+                <div
+                  key={label}
+                  className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/10 backdrop-blur-sm border border-white/15"
+                >
+                  <Icon className="w-4 h-4 text-cyan-300" />
+                  <span className="text-white/90 text-sm font-medium">{label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Parte inferior */}
+          <div className="flex items-center gap-3">
+            <div className="flex -space-x-2">
+              {["bg-blue-400", "bg-cyan-400", "bg-blue-300"].map((c, i) => (
+                <div
+                  key={i}
+                  className={`w-8 h-8 rounded-full ${c} border-2 border-blue-900/60 flex items-center justify-center`}
+                >
+                  <User className="w-3.5 h-3.5 text-blue-950" />
+                </div>
+              ))}
+            </div>
+            <p className="text-blue-100/70 text-sm">
+              Miles de familias atendidas cada día
+            </p>
+          </div>
+        </div>
       </div>
 
-      {/* Grid pattern overlay */}
-      <div
-        className="absolute inset-0 opacity-[0.03]"
-        style={{
-          backgroundImage: `linear-gradient(rgba(99,179,237,1) 1px, transparent 1px), linear-gradient(to right, rgba(99,179,237,1) 1px, transparent 1px)`,
-          backgroundSize: "40px 40px",
-        }}
-      />
+      {/* ── PANEL DERECHO ── */}
+      <div className="flex-1 flex flex-col justify-center items-center bg-slate-950 relative overflow-hidden">
+        {/* Cuadrícula sutil */}
+        <div
+          className="absolute inset-0 opacity-[0.04] pointer-events-none"
+          style={{
+            backgroundImage: `linear-gradient(rgba(99,179,237,1) 1px, transparent 1px), linear-gradient(to right, rgba(99,179,237,1) 1px, transparent 1px)`,
+            backgroundSize: "40px 40px",
+          }}
+        />
+        {/* Glow blobs */}
+        <div className="absolute top-0 right-0 w-80 h-80 rounded-full bg-blue-600/10 blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-80 h-80 rounded-full bg-cyan-600/8 blur-3xl translate-y-1/2 -translate-x-1/2 pointer-events-none" />
 
-      <div className="relative w-full max-w-md px-4">
-        {/* Card */}
-        <div className="bg-white/90 dark:bg-white/5 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-3xl p-8 shadow-2xl shadow-blue-900/10 dark:shadow-black/40">
-          {/* Logo & Header */}
-          <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 shadow-lg shadow-blue-500/30 mb-4">
-              <Stethoscope className="w-8 h-8 text-white" />
+        <div className="relative z-10 w-full max-w-sm px-6 py-10">
+          {/* Logo solo en móvil */}
+          <div className="flex lg:hidden items-center justify-center gap-2 mb-8">
+            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 shadow-lg shadow-blue-500/30">
+              <HeartPulse className="w-5 h-5 text-white" />
             </div>
-            <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
-              SaludMercal
-            </h1>
-            <p className="text-slate-600 dark:text-blue-200/70 text-sm mt-1">
-              Sistema de Gestión de Citas Médicas
+            <span className="text-white font-bold text-xl tracking-tight">SaludMercal</span>
+          </div>
+
+          {/* Encabezado */}
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold text-white tracking-tight">
+              Bienvenido de vuelta
+            </h2>
+            <p className="text-slate-400 text-sm mt-1">
+              Ingresa tus credenciales para continuar
             </p>
           </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5" id="login-form">
             {/* Error global */}
             {error && (
-              <div className="flex items-start gap-3 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-300 text-sm">
+              <div className="flex items-start gap-3 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
                 <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
                 <span>{error}</span>
               </div>
             )}
 
-            {/* Cédula */}
+            {/* Usuario */}
             <div className="space-y-1.5">
               <label
-                htmlFor="cedula-input"
-                className="block text-sm font-medium text-slate-700 dark:text-blue-100"
+                htmlFor="login-input"
+                className="block text-sm font-medium text-slate-300"
               >
-                Cédula de Identidad
+                Usuario o Correo Electrónico
               </label>
-              <input
-                id="cedula-input"
-                type="text"
-                placeholder="V-12345678"
-                {...register("cedula")}
-                onChange={(e) => {
-                  clearError();
-                  register("cedula").onChange(e);
-                }}
-                className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 dark:bg-white/10 dark:border-white/10 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-blue-500/50 dark:focus:ring-blue-400/50 focus:border-blue-500/50 dark:focus:border-blue-400/50 transition-all text-sm"
-              />
-              {errors.cedula && (
-                <p className="text-red-400 text-xs mt-1">
-                  {errors.cedula.message}
-                </p>
+              <div className="relative">
+                <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500">
+                  <User className="w-4 h-4" />
+                </div>
+                <input
+                  id="login-input"
+                  type="text"
+                  autoComplete="username"
+                  placeholder="moicastillo o correo@mercal.gob.ve"
+                  {...register("login")}
+                  onChange={(e) => {
+                    clearError();
+                    register("login").onChange(e);
+                  }}
+                  className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-800/60 border border-slate-700/60 text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500/50 hover:border-slate-600 transition-all text-sm"
+                />
+              </div>
+              {errors.login && (
+                <p className="text-red-400 text-xs mt-1">{errors.login.message}</p>
               )}
             </div>
 
@@ -115,27 +206,31 @@ export default function LoginPage() {
             <div className="space-y-1.5">
               <label
                 htmlFor="password-input"
-                className="block text-sm font-medium text-slate-700 dark:text-blue-100"
+                className="block text-sm font-medium text-slate-300"
               >
                 Contraseña
               </label>
               <div className="relative">
+                <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500">
+                  <Lock className="w-4 h-4" />
+                </div>
                 <input
                   id="password-input"
                   type={showPassword ? "text" : "password"}
+                  autoComplete="current-password"
                   placeholder="••••••••"
                   {...register("password")}
                   onChange={(e) => {
                     clearError();
                     register("password").onChange(e);
                   }}
-                  className="w-full px-4 py-3 pr-12 rounded-xl bg-slate-50 border border-slate-200 dark:bg-white/10 dark:border-white/10 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-blue-500/50 dark:focus:ring-blue-400/50 focus:border-blue-500/50 dark:focus:border-blue-400/50 transition-all text-sm"
+                  className="w-full pl-10 pr-12 py-3 rounded-xl bg-slate-800/60 border border-slate-700/60 text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500/50 hover:border-slate-600 transition-all text-sm"
                 />
                 <button
                   type="button"
                   id="toggle-password-btn"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:text-white/40 dark:hover:text-white/70 transition-colors"
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
                 >
                   {showPassword ? (
                     <EyeOff className="w-4 h-4" />
@@ -145,19 +240,18 @@ export default function LoginPage() {
                 </button>
               </div>
               {errors.password && (
-                <p className="text-red-400 text-xs mt-1">
-                  {errors.password.message}
-                </p>
+                <p className="text-red-400 text-xs mt-1">{errors.password.message}</p>
               )}
             </div>
 
-            {/* Submit button */}
+            {/* Botón submit */}
             <button
               type="submit"
               id="login-submit-btn"
               disabled={isLoading}
-              className="w-full py-3 rounded-xl bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-semibold text-sm hover:from-blue-400 hover:to-cyan-400 focus:outline-none focus:ring-2 focus:ring-blue-400/50 transition-all shadow-lg shadow-blue-500/25 disabled:opacity-60 disabled:cursor-not-allowed"
+              className="w-full py-3 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-semibold text-sm hover:from-blue-500 hover:to-cyan-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all shadow-lg shadow-blue-600/25 disabled:opacity-50 disabled:cursor-not-allowed mt-2 relative overflow-hidden group"
             >
+              <span className="absolute inset-0 bg-white/0 group-hover:bg-white/5 transition-colors duration-300" />
               {isLoading ? (
                 <span className="flex items-center justify-center gap-2">
                   <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -169,46 +263,20 @@ export default function LoginPage() {
             </button>
           </form>
 
-          {/* Demo credentials hint */}
-          <div className="mt-6 p-4 rounded-xl bg-blue-500/10 border border-blue-500/20">
-            <p className="text-slate-600 dark:text-blue-200/70 text-xs text-center mb-2">
-              🔑 <strong>Credenciales de demostración</strong>
+          {/* Badge informativo */}
+          <div className="mt-6 p-3.5 rounded-xl bg-blue-500/8 border border-blue-500/15">
+            <p className="text-slate-400 text-xs text-center">
+              🔒 Ingresa con tu{" "}
+              <span className="text-blue-300 font-medium">nombre de usuario</span> o{" "}
+              <span className="text-blue-300 font-medium">correo institucional</span>
             </p>
-            <div className="grid grid-cols-2 gap-3 mt-3">
-              <button
-                type="button"
-                id="fill-demo-admin-btn"
-                onClick={() => {
-                  setValue("cedula", DEMO_CREDENTIALS.cedula);
-                  setValue("password", DEMO_CREDENTIALS.password);
-                  clearError();
-                }}
-                className="py-2 px-2 rounded-lg bg-blue-50 dark:bg-blue-500/20 hover:bg-blue-100 dark:hover:bg-blue-500/30 text-blue-600 dark:text-blue-200 text-[10px] sm:text-xs font-medium transition-colors text-center leading-tight"
-              >
-                Como Administrador<br/>
-                <span className="opacity-70 font-normal mt-0.5 inline-block">V-10234567</span>
-              </button>
-              <button
-                type="button"
-                id="fill-demo-empleado-btn"
-                onClick={() => {
-                  setValue("cedula", DEMO_EMPLEADO_CREDENTIALS.cedula);
-                  setValue("password", DEMO_EMPLEADO_CREDENTIALS.password);
-                  clearError();
-                }}
-                className="py-2 px-2 rounded-lg bg-emerald-50 dark:bg-emerald-500/20 hover:bg-emerald-100 dark:hover:bg-emerald-500/30 text-emerald-600 dark:text-emerald-200 text-[10px] sm:text-xs font-medium transition-colors text-center leading-tight"
-              >
-                Como Empleado<br/>
-                <span className="opacity-70 font-normal mt-0.5 inline-block">V-20987654</span>
-              </button>
-            </div>
           </div>
-        </div>
 
-        {/* Footer */}
-        <p className="text-center text-slate-500 dark:text-white/20 text-xs mt-6">
-          © 2026 Mercal C.A. — Todos los derechos reservados
-        </p>
+          {/* Footer */}
+          <p className="text-center text-slate-600 text-xs mt-8">
+            © 2026 Mercal C.A. — Todos los derechos reservados
+          </p>
+        </div>
       </div>
     </div>
   );

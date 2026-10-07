@@ -41,6 +41,7 @@ export function EditarMedicoModal({ medico, open, onClose }: Props) {
     handleSubmit,
     reset,
     setValue,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<MedicoFormValues>({
     resolver: zodResolver(medicoSchema),
@@ -218,7 +219,7 @@ export function EditarMedicoModal({ medico, open, onClose }: Props) {
                       type="button"
                       onClick={() => {
                         const newDias = isSelected
-                          ? currentDias.filter((d) => d !== dia.value)
+                          ? currentDias.filter((d: number) => d !== dia.value)
                           : [...currentDias, dia.value];
                         setValue("diasLaborables", newDias, { shouldValidate: true });
                       }}

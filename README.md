@@ -43,7 +43,7 @@ saludmercal/
 ### 1. Clonar el repositorio
 
 ```bash
-git clone https://github.com/mcasti19/SaludMercal.git
+git clone 
 cd SaludMercal
 ```
 

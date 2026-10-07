@@ -13,8 +13,8 @@ export function Header() {
   const { user, logout } = useAuthStore();
   const [menuOpen, setMenuOpen] = useState(false);
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     router.push("/login");
   };
 

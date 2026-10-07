@@ -2,16 +2,17 @@ import { z } from "zod";
 
 // ── Login ────────────────────────────────────────────────────────────────────
 export const loginSchema = z.object({
-  cedula: z
+  login: z
     .string()
-    .min(1, "La cédula es obligatoria")
-    .regex(/^[VEve]-?\d{7,8}$/, "Formato válido: V-12345678"),
+    .min(1, "El usuario o correo es obligatorio")
+    .min(3, "Mínimo 3 caracteres"),
   password: z
     .string()
     .min(6, "La contraseña debe tener al menos 6 caracteres"),
 });
 
 export type LoginFormValues = z.infer<typeof loginSchema>;
+
 
 // ── Paciente ─────────────────────────────────────────────────────────────────
 export const pacienteSchema = z.object({
