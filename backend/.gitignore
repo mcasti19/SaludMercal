@@ -1,0 +1,40 @@
+# ========================
+# SaludMercal — Backend
+# Laravel / PHP
+# ========================
+
+/vendor/
+/node_modules/
+
+# Variables de entorno (nunca subir .env con valores reales)
+.env
+.env.backup
+.env.*.backup
+.env.production
+
+# Logs
+/storage/logs/*.log
+*.log
+
+# Cache y optimización de Laravel
+/bootstrap/cache/*.php
+/public/hot
+/public/storage
+
+# Testing
+.phpunit.result.cache
+/coverage/
+
+# SQLite (usamos PostgreSQL pero por si acaso)
+database/database.sqlite
+
+# Misc
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Composer
+composer.phar
