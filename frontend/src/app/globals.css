@@ -5,7 +5,7 @@
 :root {
   --font-inter: "Inter", sans-serif;
   /* --sidebar: hsl(236, 72%, 24%); */
-  --sidebar: hsl(240, 70%, 11%);
+  --sidebar: var(--color-slate-950);
   --sidebar-foreground: hsl(240 5.3% 26.1%);
   --sidebar-primary: hsl(240 5.9% 10%);
   --sidebar-primary-foreground: hsl(0 0% 98%);
@@ -70,7 +70,7 @@ select {
 }
 
 .dark {
-  --sidebar: hsl(240, 70%, 11%);
+  --sidebar: var(--color-slate-950);
   --sidebar-foreground: hsl(240 4.8% 95.9%);
   --sidebar-primary: hsl(224.3 76.3% 48%);
   --sidebar-primary-foreground: hsl(0 0% 100%);

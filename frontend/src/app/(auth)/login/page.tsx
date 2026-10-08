@@ -1,13 +1,22 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
+import { LoginFormValues, loginSchema } from "@/lib/schemas";
+import { getRedirectPath, useAuthStore } from "@/modules/auth/auth.store";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Eye, EyeOff, AlertCircle, User, Lock, HeartPulse, ShieldCheck, Activity } from "lucide-react";
-import { useAuthStore, getRedirectPath } from "@/modules/auth/auth.store";
-import { loginSchema, LoginFormValues } from "@/lib/schemas";
+import {
+  Activity,
+  AlertCircle,
+  Eye,
+  EyeOff,
+  HeartPulse,
+  Lock,
+  ShieldCheck,
+  User,
+} from "lucide-react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -49,7 +58,7 @@ export default function LoginPage() {
         />
 
         {/* Overlay degradado azul profundo */}
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-950/90 via-blue-900/80 to-cyan-900/70" />
+        <div className="absolute inset-0 bg-linear-to-br from-blue-950/90 via-blue-900/80 to-cyan-900/70" />
 
         {/* Blobs decorativos */}
         <div className="absolute -top-32 -left-32 w-96 h-96 rounded-full bg-blue-500/20 blur-3xl pointer-events-none" />
@@ -83,7 +92,7 @@ export default function LoginPage() {
               </div>
               <h1 className="text-4xl xl:text-5xl font-bold text-white leading-tight tracking-tight">
                 Tu salud,{" "}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-blue-300">
+                <span className="text-transparent bg-clip-text bg-linear-to-r from-cyan-300 to-blue-300">
                   nuestra misión
                 </span>
               </h1>
@@ -105,7 +114,9 @@ export default function LoginPage() {
                   className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/10 backdrop-blur-sm border border-white/15"
                 >
                   <Icon className="w-4 h-4 text-cyan-300" />
-                  <span className="text-white/90 text-sm font-medium">{label}</span>
+                  <span className="text-white/90 text-sm font-medium">
+                    {label}
+                  </span>
                 </div>
               ))}
             </div>
@@ -129,108 +140,152 @@ export default function LoginPage() {
           </div>
         </div>
       </div>
-
       {/* ── PANEL DERECHO ── */}
       <div className="flex-1 flex flex-col justify-center items-center bg-slate-950 relative overflow-hidden">
-        {/* Cuadrícula sutil */}
+        {/* Ambient light glow */}
+        <div className="absolute top-1/4 right-10 w-96 h-96 rounded-full bg-blue-600/10 blur-[120px] pointer-events-none" />
+        <div className="absolute bottom-10 left-10 w-80 h-80 rounded-full bg-cyan-500/10 blur-[100px] pointer-events-none" />
+
+        {/* Dynamic Grid Background */}
         <div
-          className="absolute inset-0 opacity-[0.04] pointer-events-none"
+          className="absolute inset-0 opacity-[0.03] pointer-events-none"
           style={{
-            backgroundImage: `linear-gradient(rgba(99,179,237,1) 1px, transparent 1px), linear-gradient(to right, rgba(99,179,237,1) 1px, transparent 1px)`,
-            backgroundSize: "40px 40px",
+            backgroundImage: `radial-gradient(circle at 1px 1px, rgba(255,255,255,0.4) 1px, transparent 0)`,
+            backgroundSize: "24px 24px",
           }}
         />
-        {/* Glow blobs */}
-        <div className="absolute top-0 right-0 w-80 h-80 rounded-full bg-blue-600/10 blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-80 h-80 rounded-full bg-cyan-600/8 blur-3xl translate-y-1/2 -translate-x-1/2 pointer-events-none" />
 
-        <div className="relative z-10 w-full max-w-sm px-6 py-10">
+        <div className="relative z-10 w-full max-w-md px-6 sm:px-8 py-10">
           {/* Logo solo en móvil */}
-          <div className="flex lg:hidden items-center justify-center gap-2 mb-8">
-            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 shadow-lg shadow-blue-500/30">
-              <HeartPulse className="w-5 h-5 text-white" />
+          <div className="flex lg:hidden items-center justify-center gap-3 mb-10">
+            <div className="flex items-center justify-center w-11 h-11 rounded-2xl bg-linear-to-tr from-blue-600 to-cyan-400 shadow-lg shadow-cyan-500/20 ring-1 ring-white/20">
+              <HeartPulse className="w-6 h-6 text-white" />
             </div>
-            <span className="text-white font-bold text-xl tracking-tight">SaludMercal</span>
+            <div>
+              <span className="text-white font-bold text-xl tracking-tight block">
+                SaludMercal
+              </span>
+              <p className="text-xs text-slate-400">Gestión de Salud</p>
+            </div>
           </div>
 
           {/* Encabezado */}
-          <div className="mb-8">
-            <h2 className="text-2xl font-bold text-white tracking-tight">
-              Bienvenido de vuelta
+          <div className="mb-8 text-left">
+            <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+              Iniciar Sesión
             </h2>
-            <p className="text-slate-400 text-sm mt-1">
-              Ingresa tus credenciales para continuar
+            <p className="text-slate-400 text-sm mt-1.5 leading-relaxed">
+              Ingresa tus credenciales para acceder al portal
             </p>
           </div>
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5" id="login-form">
-            {/* Error global */}
+          <form
+            onSubmit={handleSubmit(onSubmit)}
+            className="space-y-6"
+            id="login-form"
+            noValidate
+          >
+            {/* Alert Error Global */}
             {error && (
-              <div className="flex items-start gap-3 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+              <div className="flex items-start gap-3 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm animate-in fade-in slide-in-from-top-2 duration-200">
                 <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
-                <span>{error}</span>
+                <span className="leading-snug">{error}</span>
               </div>
             )}
 
-            {/* Usuario */}
-            <div className="space-y-1.5">
-              <label
-                htmlFor="login-input"
-                className="block text-sm font-medium text-slate-300"
-              >
-                Usuario o Correo Electrónico
-              </label>
-              <div className="relative">
-                <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500">
+            {/* Input Usuario */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label
+                  htmlFor="login-input"
+                  className="text-xs font-semibold uppercase tracking-wider text-slate-300"
+                >
+                  Usuario o Correo
+                </label>
+              </div>
+
+              <div className="relative group">
+                <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-cyan-400 transition-colors duration-200 pointer-events-none">
                   <User className="w-4 h-4" />
                 </div>
+
                 <input
                   id="login-input"
                   type="text"
                   autoComplete="username"
-                  placeholder="moicastillo o correo@mercal.gob.ve"
-                  {...register("login")}
-                  onChange={(e) => {
-                    clearError();
-                    register("login").onChange(e);
-                  }}
-                  className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-800/60 border border-slate-700/60 text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500/50 hover:border-slate-600 transition-all text-sm"
+                  placeholder="ej. usuario o nombre@mercal.gob.ve"
+                  aria-invalid={!!errors.login}
+                  aria-describedby={errors.login ? "login-error" : undefined}
+                  {...register("login", {
+                    onChange: () => clearError(),
+                  })}
+                  className={`w-full pl-10 pr-4 py-3.5 rounded-xl bg-slate-900/80 border text-slate-100 placeholder:text-slate-500 text-sm transition-all duration-200 shadow-inner focus:outline-none ${
+                    errors.login
+                      ? "border-red-500/70 focus:border-red-500 focus:ring-4 focus:ring-red-500/10"
+                      : "border-slate-800 hover:border-slate-700 focus:border-cyan-500/80 focus:ring-4 focus:ring-cyan-500/10"
+                  }`}
                 />
+
+                {errors.login && (
+                  <div className="absolute right-3.5 top-1/2 -translate-y-1/2 text-red-400 pointer-events-none">
+                    <AlertCircle className="w-4 h-4" />
+                  </div>
+                )}
               </div>
+
               {errors.login && (
-                <p className="text-red-400 text-xs mt-1">{errors.login.message}</p>
+                <p
+                  id="login-error"
+                  className="text-red-400 text-xs font-medium pl-1 flex items-center gap-1.5 animate-in fade-in duration-150"
+                >
+                  {errors.login.message}
+                </p>
               )}
             </div>
 
-            {/* Password */}
-            <div className="space-y-1.5">
-              <label
-                htmlFor="password-input"
-                className="block text-sm font-medium text-slate-300"
-              >
-                Contraseña
-              </label>
-              <div className="relative">
-                <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500">
+            {/* Input Password */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label
+                  htmlFor="password-input"
+                  className="text-xs font-semibold uppercase tracking-wider text-slate-300"
+                >
+                  Contraseña
+                </label>
+              </div>
+
+              <div className="relative group">
+                <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-cyan-400 transition-colors duration-200 pointer-events-none">
                   <Lock className="w-4 h-4" />
                 </div>
+
                 <input
                   id="password-input"
                   type={showPassword ? "text" : "password"}
                   autoComplete="current-password"
-                  placeholder="••••••••"
-                  {...register("password")}
-                  onChange={(e) => {
-                    clearError();
-                    register("password").onChange(e);
-                  }}
-                  className="w-full pl-10 pr-12 py-3 rounded-xl bg-slate-800/60 border border-slate-700/60 text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500/50 hover:border-slate-600 transition-all text-sm"
+                  placeholder="••••••••••••"
+                  aria-invalid={!!errors.password}
+                  aria-describedby={
+                    errors.password ? "password-error" : undefined
+                  }
+                  {...register("password", {
+                    onChange: () => clearError(),
+                  })}
+                  className={`w-full pl-10 pr-12 py-3.5 rounded-xl bg-slate-900/80 border text-slate-100 placeholder:text-slate-500 text-sm transition-all duration-200 shadow-inner focus:outline-none ${
+                    errors.password
+                      ? "border-red-500/70 focus:border-red-500 focus:ring-4 focus:ring-red-500/10"
+                      : "border-slate-800 hover:border-slate-700 focus:border-cyan-500/80 focus:ring-4 focus:ring-cyan-500/10"
+                  }`}
                 />
+
                 <button
                   type="button"
                   id="toggle-password-btn"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
+                  aria-label={
+                    showPassword ? "Ocultar contraseña" : "Mostrar contraseña"
+                  }
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-200 focus:text-cyan-400 transition-colors rounded-lg focus:outline-none"
                 >
                   {showPassword ? (
                     <EyeOff className="w-4 h-4" />
@@ -239,41 +294,46 @@ export default function LoginPage() {
                   )}
                 </button>
               </div>
+
               {errors.password && (
-                <p className="text-red-400 text-xs mt-1">{errors.password.message}</p>
+                <p
+                  id="password-error"
+                  className="text-red-400 text-xs font-medium pl-1 flex items-center gap-1.5 animate-in fade-in duration-150"
+                >
+                  {errors.password.message}
+                </p>
               )}
             </div>
 
-            {/* Botón submit */}
+            {/* Submit Button */}
             <button
               type="submit"
               id="login-submit-btn"
               disabled={isLoading}
-              className="w-full py-3 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-semibold text-sm hover:from-blue-500 hover:to-cyan-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all shadow-lg shadow-blue-600/25 disabled:opacity-50 disabled:cursor-not-allowed mt-2 relative overflow-hidden group"
+              className="w-full py-3.5 px-4 rounded-xl bg-linear-to-r from-blue-600 via-blue-500 to-cyan-500 text-white font-medium text-sm hover:brightness-110 active:scale-[0.98] transition-all duration-200 shadow-lg shadow-blue-500/25 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 focus:outline-none focus:ring-4 focus:ring-cyan-500/20"
             >
-              <span className="absolute inset-0 bg-white/0 group-hover:bg-white/5 transition-colors duration-300" />
               {isLoading ? (
                 <span className="flex items-center justify-center gap-2">
                   <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Verificando...
+                  Autenticando...
                 </span>
               ) : (
-                "Iniciar Sesión"
+                "Acceder al Sistema"
               )}
             </button>
           </form>
 
-          {/* Badge informativo */}
-          <div className="mt-6 p-3.5 rounded-xl bg-blue-500/8 border border-blue-500/15">
-            <p className="text-slate-400 text-xs text-center">
-              🔒 Ingresa con tu{" "}
-              <span className="text-blue-300 font-medium">nombre de usuario</span> o{" "}
-              <span className="text-blue-300 font-medium">correo institucional</span>
+          {/* Badge Informativo */}
+          <div className="mt-8 p-3.5 rounded-xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-sm">
+            <p className="text-slate-400 text-xs text-center leading-relaxed">
+              🔒 Utiliza tu usuario o correo{" "}
+              <span className="text-cyan-400 font-medium">@mercal.gob.ve</span>{" "}
+              registrado.
             </p>
           </div>
 
           {/* Footer */}
-          <p className="text-center text-slate-600 text-xs mt-8">
+          <p className="text-center text-slate-500 text-xs mt-8">
             © 2026 Mercal C.A. — Todos los derechos reservados
           </p>
         </div>
