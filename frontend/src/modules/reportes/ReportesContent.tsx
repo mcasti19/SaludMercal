@@ -1,18 +1,31 @@
 "use client";
 
+import { useEffect } from "react";
 import { useCitasStore } from "@/modules/citas/citas.store";
 import { usePacientesStore } from "@/modules/pacientes/pacientes.store";
 import { useMedicosStore } from "@/modules/medicos/medicos.store";
 import { CITA_ESTADO_CONFIG } from "@/lib/constants";
 import { CitaEstado } from "@/types";
-import { BarChart3, TrendingUp, Activity } from "lucide-react";
-import { MOCK_ESPECIALIDADES } from "../medicos/medicos.mocks";
+import { BarChart3, TrendingUp, Activity, Loader2 } from "lucide-react";
 
 const ESTADOS: CitaEstado[] = ["PENDIENTE", "CONFIRMADA", "EN_ATENCION", "COMPLETADA", "CANCELADA"];
 
 export function ReportesContent() {
-  const { citas } = useCitasStore();
-  const { pacientes } = usePacientesStore();
+  const { citas, isLoading: citasLoading, fetchCitas } = useCitasStore();
+  const { pacientes, isLoading: pacientesLoading, fetchPacientes } = usePacientesStore();
+  const { medicos, especialidades, isLoading: medicosLoading, fetchMedicos, fetchEspecialidades } = useMedicosStore();
+
+  useEffect(() => {
+    fetchCitas();
+    fetchPacientes();
+    fetchMedicos();
+    fetchEspecialidades();
+  }, [fetchCitas, fetchPacientes, fetchMedicos, fetchEspecialidades]);
+
+  const isLoading =
+    (citasLoading && citas.length === 0) ||
+    (pacientesLoading && pacientes.length === 0) ||
+    (medicosLoading && medicos.length === 0);
 
   const totalCitas = citas.length;
   const completadas = citas.filter((c) => c.estado === "COMPLETADA").length;
@@ -25,14 +38,13 @@ export function ReportesContent() {
     config: CITA_ESTADO_CONFIG[e],
   }));
 
-  // Citas por especialidad
-  const citasPorEspecialidad = MOCK_ESPECIALIDADES.map((esp) => ({
+  // Citas por especialidad (usando catálogo real de la API)
+  const citasPorEspecialidad = especialidades.map((esp) => ({
     nombre: esp.nombre,
     count: citas.filter((c) => c.especialidad === esp.nombre).length,
   })).filter((e) => e.count > 0).sort((a, b) => b.count - a.count);
 
   // Citas por médico
-  const { medicos } = useMedicosStore();
   const citasPorMedico = medicos.map((m) => ({
     nombre: `Dr. ${m.nombre} ${m.apellido}`,
     especialidad: m.especialidadNombre,
@@ -45,11 +57,19 @@ export function ReportesContent() {
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-slate-900 dark:text-white text-2xl font-bold">Reportes y Estadísticas</h1>
-        <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
-          Análisis del sistema de citas médicas — datos en tiempo real
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-slate-900 dark:text-white text-2xl font-bold">Reportes y Estadísticas</h1>
+          <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
+            Análisis del sistema de citas médicas — datos en tiempo real
+          </p>
+        </div>
+        {isLoading && (
+          <div className="flex items-center gap-2 text-xs font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 px-3 py-1.5 rounded-xl border border-blue-200 dark:border-blue-500/20">
+            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            <span>Sincronizando datos...</span>
+          </div>
+        )}
       </div>
 
       {/* KPI Cards */}

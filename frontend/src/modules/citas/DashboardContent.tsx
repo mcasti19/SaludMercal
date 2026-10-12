@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import {
   CalendarClock,
   Users,
@@ -10,7 +11,7 @@ import {
   ActivitySquare,
   ArrowRight,
 } from "lucide-react";
-import { useCitasStore } from "@/modules/citas/citas.store";
+import { useCitasStore, getTodayLocalString } from "@/modules/citas/citas.store";
 import { usePacientesStore } from "@/modules/pacientes/pacientes.store";
 import { useMedicosStore } from "@/modules/medicos/medicos.store";
 import { StatCard } from "@/components/shared/StatCard";
@@ -19,17 +20,23 @@ import { formatDate, formatTime } from "@/lib/utils";
 import Link from "next/link";
 
 export function DashboardContent() {
-  const { citas } = useCitasStore();
-  const { pacientes } = usePacientesStore();
+  const { citas, fetchCitas } = useCitasStore();
+  const { pacientes, fetchPacientes } = usePacientesStore();
+  const { medicos, fetchMedicos } = useMedicosStore();
 
-  const today = new Date().toISOString().split("T")[0];
+  useEffect(() => {
+    fetchCitas();
+    fetchPacientes();
+    fetchMedicos();
+  }, [fetchCitas, fetchPacientes, fetchMedicos]);
+
+  const today = getTodayLocalString();
   const citasHoy = citas.filter((c) => c.fecha === today);
   const citasPendientes = citas.filter((c) => c.estado === "PENDIENTE");
   const citasCompletadas = citas.filter((c) => c.estado === "COMPLETADA");
   const citasCanceladas = citas.filter((c) => c.estado === "CANCELADA");
   const citasEnAtencion = citas.filter((c) => c.estado === "EN_ATENCION");
   const pacientesActivos = pacientes.filter((p) => p.estado === "ACTIVO");
-  const { medicos } = useMedicosStore();
   const medicosActivos = medicos.filter((m) => m.activo);
 
   const recentCitas = [...citas]

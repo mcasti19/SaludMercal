@@ -1,30 +1,49 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuthStore } from "@/modules/auth/auth.store";
 import { useCitasStore } from "@/modules/citas/citas.store";
 import { useMedicosStore } from "@/modules/medicos/medicos.store";
 import { SolicitarCitaModal } from "./SolicitarCitaModal";
 import { CitaEstadoBadge } from "@/components/shared/CitaEstadoBadge";
-import { CalendarDays, Plus, Clock, FileText, XCircle } from "lucide-react";
+import { CalendarDays, Plus, Clock, FileText, XCircle, Loader2, AlertCircle } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import { Cita } from "@/types";
 
 export function PortalCitasContent() {
   const { user } = useAuthStore();
-  const { citas, updateEstado } = useCitasStore();
-  const { medicos } = useMedicosStore();
+  const { citas, isLoading, error, fetchCitas, updateEstado } = useCitasStore();
+  const { medicos, fetchMedicos } = useMedicosStore();
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
   
   const [showNuevaModal, setShowNuevaModal] = useState(false);
 
-  // Filter only user's appointments
-  const misCitas = citas.filter((c) => c.pacienteId === user?.id).sort(
+  useEffect(() => {
+    fetchCitas();
+    fetchMedicos();
+  }, [fetchCitas, fetchMedicos]);
+
+  // For employee role, backend already scopes to the authenticated patient's records
+  const misCitas = (
+    user?.role === "EMPLEADO"
+      ? citas
+      : citas.filter(
+          (c) =>
+            c.pacienteId === user?.patientId ||
+            c.pacienteId === user?.id
+        )
+  ).sort(
     (a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime()
   );
 
-  const handleCancelarCita = (cita: Cita) => {
+  const handleCancelarCita = async (cita: Cita) => {
     if (confirm("¿Estás seguro de que deseas cancelar esta cita?")) {
-      updateEstado(cita.id, "CANCELADA");
+      setCancellingId(cita.id);
+      try {
+        await updateEstado(cita.id, "CANCELADA");
+      } finally {
+        setCancellingId(null);
+      }
     }
   };
 
@@ -40,15 +59,36 @@ export function PortalCitasContent() {
         </div>
         <button
           onClick={() => setShowNuevaModal(true)}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white text-sm font-semibold shadow-lg shadow-emerald-500/20 transition-all"
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white text-sm font-semibold shadow-lg shadow-emerald-500/20 transition-all cursor-pointer"
         >
           <Plus className="w-4 h-4" />
           Solicitar Cita
         </button>
       </div>
 
+      {/* Error alert banner */}
+      {error && (
+        <div className="flex items-center gap-3 p-4 rounded-xl bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 text-red-600 dark:text-red-400 text-sm">
+          <AlertCircle className="w-5 h-5 shrink-0" />
+          <p className="flex-1 font-medium">{error}</p>
+          <button
+            onClick={() => fetchCitas()}
+            className="text-xs font-semibold underline hover:text-red-700"
+          >
+            Reintentar
+          </button>
+        </div>
+      )}
+
       {/* List */}
-      {misCitas.length === 0 ? (
+      {isLoading && citas.length === 0 ? (
+        <div className="bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 rounded-2xl p-12 text-center flex flex-col items-center justify-center">
+          <Loader2 className="w-8 h-8 animate-spin text-emerald-500 mb-3" />
+          <p className="font-medium text-sm text-slate-500 dark:text-slate-400">
+            Cargando sus citas médicas...
+          </p>
+        </div>
+      ) : misCitas.length === 0 ? (
         <div className="bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 rounded-2xl p-12 text-center">
           <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 rounded-full flex items-center justify-center mx-auto mb-4">
             <CalendarDays className="w-8 h-8" />
@@ -61,7 +101,7 @@ export function PortalCitasContent() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {misCitas.map((cita) => {
-            const medico = medicos.find(m => m.id === cita.medicoId);
+            const medico = medicos.find((m) => m.id === cita.medicoId);
             const isPendingOrConfirmed = cita.estado === "PENDIENTE" || cita.estado === "CONFIRMADA";
 
             return (
@@ -75,19 +115,24 @@ export function PortalCitasContent() {
                     {isPendingOrConfirmed && (
                       <button 
                         onClick={() => handleCancelarCita(cita)}
-                        className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors"
+                        disabled={cancellingId === cita.id}
+                        className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors disabled:opacity-50"
                         title="Cancelar cita"
                       >
-                        <XCircle className="w-4 h-4" />
+                        {cancellingId === cita.id ? (
+                          <Loader2 className="w-4 h-4 animate-spin text-red-500" />
+                        ) : (
+                          <XCircle className="w-4 h-4" />
+                        )}
                       </button>
                     )}
                   </div>
                   
                   <h3 className="text-slate-900 dark:text-white font-semibold text-lg leading-tight mb-1">
-                    Dr. {medico ? `${medico.nombre} ${medico.apellido}` : cita.medicoNombre}
+                    {medico ? `Dr. ${medico.nombre} ${medico.apellido}` : cita.medicoNombre}
                   </h3>
                   <p className="text-emerald-600 dark:text-emerald-400 text-sm font-medium mb-4">
-                    {medico?.especialidadNombre || "Especialidad"}
+                    {medico?.especialidadNombre || cita.especialidad || "Especialidad"}
                   </p>
 
                   <div className="space-y-2 mb-4">

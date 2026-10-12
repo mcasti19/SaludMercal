@@ -1,21 +1,36 @@
 "use client";
 
+import { useEffect } from "react";
 import { useAuthStore } from "@/modules/auth/auth.store";
 import { useCitasStore } from "@/modules/citas/citas.store";
 import { useMedicosStore } from "@/modules/medicos/medicos.store";
 import { useRepososStore } from "@/modules/reposos/reposos.store";
 import { formatDate } from "@/lib/utils";
-import { Activity, CalendarDays, CheckCircle2, FileBox, FileText, Pill, Stethoscope } from "lucide-react";
+import { Activity, CheckCircle2, FileBox, FileText, Pill, Stethoscope, Loader2 } from "lucide-react";
 
 export function PortalExpedienteContent() {
   const { user } = useAuthStore();
-  const { citas } = useCitasStore();
-  const { reposos } = useRepososStore();
-  const { medicos } = useMedicosStore();
+  const { citas, isLoading: citasLoading, fetchCitas } = useCitasStore();
+  const { reposos, isLoading: repososLoading, fetchReposos } = useRepososStore();
+  const { medicos, fetchMedicos } = useMedicosStore();
+
+  useEffect(() => {
+    fetchCitas();
+    fetchReposos();
+    fetchMedicos();
+  }, [fetchCitas, fetchReposos, fetchMedicos]);
+
+  const isLoading = (citasLoading && citas.length === 0) || (repososLoading && reposos.length === 0);
 
   // Historial Médico Consolidado
   const historialCitas = citas
-    .filter((c) => c.pacienteId === user?.id && c.estado === "COMPLETADA")
+    .filter(
+      (c) =>
+        (user?.role === "EMPLEADO" ||
+          c.pacienteId === user?.patientId ||
+          c.pacienteId === user?.id) &&
+        c.estado === "COMPLETADA"
+    )
     .map((c) => ({
       type: "CITA" as const,
       date: new Date(`${c.fecha}T${c.hora}`),
@@ -23,7 +38,13 @@ export function PortalExpedienteContent() {
     }));
 
   const historialReposos = reposos
-    .filter((r) => r.empleadoId === user?.id && r.estado === "APROBADO")
+    .filter(
+      (r) =>
+        (user?.role === "EMPLEADO" ||
+          r.empleadoId === user?.patientId ||
+          r.empleadoId === user?.id) &&
+        r.estado === "APROBADO"
+    )
     .map((r) => ({
       type: "REPOSO" as const,
       date: new Date(r.creadoEn),
@@ -56,11 +77,11 @@ export function PortalExpedienteContent() {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div>
               <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Cédula</p>
-              <p className="text-sm font-medium text-slate-700 dark:text-slate-200">{user?.cedula}</p>
+              <p className="text-sm font-medium text-slate-700 dark:text-slate-200">{user?.cedula || "N/A"}</p>
             </div>
             <div>
               <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Departamento</p>
-              <p className="text-sm font-medium text-slate-700 dark:text-slate-200">{user?.departamento}</p>
+              <p className="text-sm font-medium text-slate-700 dark:text-slate-200">{user?.departamento || "General"}</p>
             </div>
             <div>
               <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Consultas</p>
@@ -80,7 +101,12 @@ export function PortalExpedienteContent() {
           <Activity className="w-5 h-5 text-emerald-500" /> Línea de Tiempo Clínica
         </h3>
 
-        {timeline.length === 0 ? (
+        {isLoading ? (
+          <div className="text-center py-12 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl flex flex-col items-center justify-center">
+            <Loader2 className="w-8 h-8 animate-spin text-emerald-500 mb-3" />
+            <p className="text-slate-500 font-medium text-sm">Cargando expediente médico...</p>
+          </div>
+        ) : timeline.length === 0 ? (
           <div className="text-center py-12 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl">
             <FileText className="w-10 h-10 mx-auto text-slate-300 dark:text-slate-600 mb-3" />
             <p className="text-slate-500 font-medium">Su expediente está vacío</p>

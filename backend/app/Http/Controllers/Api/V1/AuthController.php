@@ -46,6 +46,8 @@ class AuthController extends Controller
         $user->tokens()->where('name', 'spa-token')->delete();
         $token = $user->createToken('spa-token', [$user->role->value]);
 
+        $user->loadMissing('patient.department');
+
         return response()->json([
             'token' => $token->plainTextToken,
             'expires_at' => $token->accessToken->expires_at?->toIso8601String(),
@@ -55,7 +57,10 @@ class AuthController extends Controller
 
     public function me(Request $request): JsonResponse
     {
-        return response()->json(['user' => new UserResource($request->user())]);
+        $user = $request->user();
+        $user->loadMissing('patient.department');
+
+        return response()->json(['user' => new UserResource($user)]);
     }
 
     public function logout(Request $request): JsonResponse

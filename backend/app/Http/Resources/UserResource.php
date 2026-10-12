@@ -19,6 +19,9 @@ class UserResource extends JsonResource
             'role' => $this->role->value,
             'is_active' => $this->is_active,
             'must_change_password' => $this->must_change_password,
+            'national_id' => $this->patient?->national_id,
+            'department' => $this->patient?->department?->name,
+            'patient_id' => $this->patient?->id,
             'last_login_at' => $this->last_login_at?->toIso8601String(),
             'created_at' => $this->created_at?->toIso8601String(),
         ];

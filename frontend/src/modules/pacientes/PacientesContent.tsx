@@ -1,16 +1,30 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { Plus, Search, Users, RefreshCw, Pencil, Trash2 } from "lucide-react";
+import { useState, useMemo, useEffect } from "react";
+import { Plus, Search, Users, RefreshCw, Pencil, Trash2, AlertCircle } from "lucide-react";
 import { usePacientesStore } from "@/modules/pacientes/pacientes.store";
 import { Paciente } from "@/types";
-import { calcularEdad, formatDate } from "@/lib/utils";
+import { calcularEdad } from "@/lib/utils";
 import { NuevoPacienteModal } from "./NuevoPacienteModal";
 
 export function PacientesContent() {
-  const { pacientes, search, setSearch, deletePaciente } = usePacientesStore();
+  const {
+    pacientes,
+    search,
+    setSearch,
+    deletePaciente,
+    fetchPacientes,
+    fetchDepartments,
+    isLoading,
+    error,
+  } = usePacientesStore();
   const [showModal, setShowModal] = useState(false);
   const [pacienteToEdit, setPacienteToEdit] = useState<Paciente | null>(null);
+
+  useEffect(() => {
+    fetchPacientes();
+    fetchDepartments();
+  }, [fetchPacientes, fetchDepartments]);
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
@@ -30,6 +44,14 @@ export function PacientesContent() {
 
   return (
     <div className="p-6 space-y-6">
+      {/* Error Alert */}
+      {error && (
+        <div className="flex items-center gap-2 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 text-sm">
+          <AlertCircle className="w-4 h-4 shrink-0" />
+          <span>{error}</span>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>
@@ -63,16 +85,22 @@ export function PacientesContent() {
         </div>
         <button
           id="pacientes-reset-btn"
-          onClick={() => setSearch("")}
+          onClick={() => { setSearch(""); fetchPacientes(""); }}
           className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:text-white text-sm transition-colors"
+          title="Recargar pacientes"
         >
-          <RefreshCw className="w-4 h-4" />
+          <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin text-blue-500" : ""}`} />
         </button>
       </div>
 
       {/* Table */}
       <div className="bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 rounded-2xl overflow-hidden">
-        {filtered.length === 0 ? (
+        {isLoading && pacientes.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 text-center">
+            <div className="w-8 h-8 border-2 border-blue-500/30 border-t-blue-500 rounded-full animate-spin mb-3" />
+            <p className="text-slate-500 dark:text-slate-400 font-medium">Cargando pacientes desde el servidor...</p>
+          </div>
+        ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center">
             <Users className="w-12 h-12 text-slate-600 mb-3" />
             <p className="text-slate-500 dark:text-slate-400 font-medium">No se encontraron pacientes</p>

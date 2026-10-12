@@ -15,13 +15,19 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login, isLoading, error, clearError } = useAuthStore();
+  const { login, isLoading, error, clearError, isAuthenticated, user, isHydrated } = useAuthStore();
   const [showPassword, setShowPassword] = useState(false);
+
+  useEffect(() => {
+    if (isHydrated && isAuthenticated && user) {
+      router.replace(getRedirectPath(user.role));
+    }
+  }, [isHydrated, isAuthenticated, user, router]);
 
   const {
     register,

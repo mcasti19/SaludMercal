@@ -1,6 +1,7 @@
 "use client";
 
-import { X } from "lucide-react";
+import { useState } from "react";
+import { X, AlertCircle } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { pacienteSchema, PacienteFormValues } from "@/lib/schemas";
@@ -14,7 +15,8 @@ interface NuevoPacienteModalProps {
 }
 
 export function NuevoPacienteModal({ paciente, onClose }: NuevoPacienteModalProps) {
-  const { addPaciente, updatePaciente } = usePacientesStore();
+  const { addPaciente, updatePaciente, departments } = usePacientesStore();
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const isEditing = !!paciente;
 
   const {
@@ -37,13 +39,19 @@ export function NuevoPacienteModal({ paciente, onClose }: NuevoPacienteModalProp
       : { estado: "ACTIVO" },
   });
 
-  const onSubmit = (data: PacienteFormValues) => {
-    if (isEditing && paciente) {
-      updatePaciente(paciente.id, data);
+  const onSubmit = async (data: PacienteFormValues) => {
+    setSubmitError(null);
+    const ok = isEditing && paciente
+      ? await updatePaciente(paciente.id, data)
+      : await addPaciente(data);
+
+    if (ok) {
+      onClose();
     } else {
-      addPaciente(data);
+      setSubmitError(
+        usePacientesStore.getState().error ?? "No fue posible guardar el registro."
+      );
     }
-    onClose();
   };
 
   return (
@@ -62,6 +70,13 @@ export function NuevoPacienteModal({ paciente, onClose }: NuevoPacienteModalProp
 
         {/* Form */}
         <form onSubmit={handleSubmit(onSubmit)} id="paciente-form" className="p-6 space-y-4">
+          {submitError && (
+            <div className="flex items-center gap-2 p-3.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 text-sm">
+              <AlertCircle className="w-4 h-4 shrink-0" />
+              <span>{submitError}</span>
+            </div>
+          )}
+
           {/* Nombre & Apellido */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
@@ -109,7 +124,7 @@ export function NuevoPacienteModal({ paciente, onClose }: NuevoPacienteModalProp
                 className="w-full px-3 py-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all"
               >
                 <option value="">Seleccionar...</option>
-                {DEPARTAMENTOS.map((d) => (
+                {(departments.length > 0 ? departments.map((d) => d.name) : DEPARTAMENTOS).map((d) => (
                   <option key={d} value={d}>{d}</option>
                 ))}
               </select>
@@ -178,9 +193,18 @@ export function NuevoPacienteModal({ paciente, onClose }: NuevoPacienteModalProp
               type="submit"
               id="paciente-submit-btn"
               disabled={isSubmitting}
-              className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-blue-500 to-cyan-500 text-white text-sm font-semibold hover:from-blue-400 hover:to-cyan-400 transition-all disabled:opacity-60"
+              className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-blue-500 to-cyan-500 text-white text-sm font-semibold hover:from-blue-400 hover:to-cyan-400 transition-all disabled:opacity-60 flex items-center justify-center gap-2"
             >
-              {isEditing ? "Guardar Cambios" : "Registrar Paciente"}
+              {isSubmitting ? (
+                <>
+                  <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  Guardando...
+                </>
+              ) : isEditing ? (
+                "Guardar Cambios"
+              ) : (
+                "Registrar Paciente"
+              )}
             </button>
           </div>
         </form>

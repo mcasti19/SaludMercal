@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/modules/auth/auth.store";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -8,8 +9,14 @@ import { Bell, Search, User, Settings, LogOut, ChevronDown } from "lucide-react"
 import { cn } from "@/lib/utils";
 
 export function PortalHeader() {
+  const router = useRouter();
   const { user, logout } = useAuthStore();
   const [menuOpen, setMenuOpen] = useState(false);
+
+  const handleLogout = async () => {
+    await logout();
+    router.push("/login");
+  };
 
   return (
     <header className="h-16 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border-b border-slate-200 dark:border-slate-700/50 flex items-center justify-between px-6 shrink-0 z-10">
@@ -60,7 +67,7 @@ export function PortalHeader() {
               </button>
               <div className="h-px bg-slate-200 dark:bg-slate-700 my-1" />
               <button
-                onClick={logout}
+                onClick={handleLogout}
                 className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
               >
                 <LogOut className="w-4 h-4" /> Cerrar Sesión

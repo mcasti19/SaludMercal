@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { X, Upload, UserCircle2 } from "lucide-react";
+import { X, Upload, UserCircle2, AlertCircle } from "lucide-react";
 import { medicoSchema, MedicoFormValues } from "@/lib/schemas";
 import { useMedicosStore } from "./medicos.store";
 import { Medico } from "@/types";
@@ -34,6 +34,7 @@ const TURNO_OPTIONS = Object.entries(TURNOS_CONFIG).map(([k, v]) => ({
 export function EditarMedicoModal({ medico, open, onClose }: Props) {
   const { updateMedico, especialidades } = useMedicosStore();
   const [fotoPreview, setFotoPreview] = useState<string | null>(medico.fotoPerfil ?? null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const {
@@ -95,15 +96,20 @@ export function EditarMedicoModal({ medico, open, onClose }: Props) {
     reader.readAsDataURL(file);
   };
 
-  const onSubmit = (data: MedicoFormValues) => {
-    updateMedico(medico.id, {
+  const onSubmit = async (data: MedicoFormValues) => {
+    setSubmitError(null);
+    const ok = await updateMedico(medico.id, {
       ...data,
       cedula: data.cedula || undefined,
       telefono: data.telefono || undefined,
       email: data.email || undefined,
       fotoPerfil: data.fotoPerfil || undefined,
     });
-    onClose();
+    if (ok) {
+      onClose();
+    } else {
+      setSubmitError(useMedicosStore.getState().error ?? "No se pudieron guardar los cambios del médico.");
+    }
   };
 
   if (!open) return null;
@@ -142,6 +148,13 @@ export function EditarMedicoModal({ medico, open, onClose }: Props) {
         {/* Body */}
         <div className="overflow-y-auto flex-1 px-6 py-5">
           <form id="editar-medico-form" onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+            {submitError && (
+              <div className="flex items-center gap-2 p-3.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 text-sm">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span>{submitError}</span>
+              </div>
+            )}
+
             {/* Foto */}
             <div className="flex flex-col items-center gap-3">
               <div
@@ -295,9 +308,16 @@ export function EditarMedicoModal({ medico, open, onClose }: Props) {
             type="submit"
             form="editar-medico-form"
             disabled={isSubmitting}
-            className="px-5 py-2 rounded-xl bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white text-sm font-semibold shadow-md shadow-blue-500/20 transition-all disabled:opacity-60"
+            className="px-5 py-2 rounded-xl bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white text-sm font-semibold shadow-md shadow-blue-500/20 transition-all disabled:opacity-60 flex items-center gap-2"
           >
-            Guardar Cambios
+            {isSubmitting ? (
+              <>
+                <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                Guardando...
+              </>
+            ) : (
+              "Guardar Cambios"
+            )}
           </button>
         </div>
       </div>

@@ -1,20 +1,34 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMedicosStore } from "./medicos.store";
-import { Stethoscope, Clock, Building2, Plus, Pencil, PowerOff, Trash2, UserCircle2, Search, Mail, Phone } from "lucide-react";
+import { Stethoscope, Clock, Building2, Plus, Pencil, PowerOff, Trash2, UserCircle2, Search, Mail, Phone, AlertCircle } from "lucide-react";
 import { TURNOS_CONFIG } from "@/lib/constants";
 import { NuevoMedicoModal } from "./NuevoMedicoModal";
 import { EditarMedicoModal } from "./EditarMedicoModal";
 import { Medico } from "@/types";
 
 export function MedicosContent() {
-  const { medicos, especialidades, toggleActivo, deleteMedico } = useMedicosStore();
+  const {
+    medicos,
+    especialidades,
+    toggleActivo,
+    deleteMedico,
+    fetchMedicos,
+    fetchEspecialidades,
+    isLoading,
+    error,
+  } = useMedicosStore();
   const [showNuevo, setShowNuevo] = useState(false);
   const [medicoToEdit, setMedicoToEdit] = useState<Medico | null>(null);
   const [filtroEsp, setFiltroEsp] = useState<string>("TODAS");
   const [filtroEstado, setFiltroEstado] = useState<"TODOS" | "ACTIVOS" | "INACTIVOS">("TODOS");
   const [busqueda, setBusqueda] = useState("");
+
+  useEffect(() => {
+    fetchMedicos();
+    fetchEspecialidades();
+  }, [fetchMedicos, fetchEspecialidades]);
 
   const medicosActivos = medicos.filter((m) => m.activo);
   const medicosInactivos = medicos.filter((m) => !m.activo);
@@ -43,6 +57,14 @@ export function MedicosContent() {
 
   return (
     <div className="p-6 space-y-6">
+      {/* Error Alert */}
+      {error && (
+        <div className="flex items-center gap-2 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 text-sm">
+          <AlertCircle className="w-4 h-4 shrink-0" />
+          <span>{error}</span>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -133,9 +155,15 @@ export function MedicosContent() {
       </div>
 
       {/* Medicos grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-        {medicosFiltrados.map((medico) => {
-          const turnoConfig = TURNOS_CONFIG[medico.turno];
+      {isLoading && medicos.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-16 text-center">
+          <div className="w-8 h-8 border-2 border-blue-500/30 border-t-blue-500 rounded-full animate-spin mb-3" />
+          <p className="text-slate-500 dark:text-slate-400 font-medium">Cargando médicos y horarios...</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          {medicosFiltrados.map((medico) => {
+            const turnoConfig = TURNOS_CONFIG[medico.turno];
           return (
             <div
               key={medico.id}
@@ -235,9 +263,10 @@ export function MedicosContent() {
             </div>
           );
         })}
-      </div>
+        </div>
+      )}
 
-      {medicosFiltrados.length === 0 && (
+      {!isLoading && medicosFiltrados.length === 0 && (
         <div className="text-center py-12 text-slate-400 dark:text-slate-500">
           <UserCircle2 className="w-10 h-10 mx-auto mb-3 opacity-40" />
           <p className="font-medium">No se encontraron médicos</p>

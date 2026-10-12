@@ -3,7 +3,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { AuthUser } from "@/types";
-import { apiLogin, apiLogout, apiMe, setAuthToken, getAuthToken } from "@/lib/api";
+import { apiLogin, apiLogout, apiMe, setAuthToken, getAuthToken, ApiUser } from "@/lib/api";
 
 /** Roles con acceso al panel de administración */
 export const ADMIN_ROLES = ["ADMIN", "RECEPCION", "MEDICO", "ENFERMERIA"] as const;
@@ -34,17 +34,19 @@ const API_ROLE_MAP: Record<string, AuthUser["role"]> = {
   employee:     "EMPLEADO",
 };
 
-function mapApiUser(apiUser: { id: number; name: string; username: string; email: string; role: string }): AuthUser {
+function mapApiUser(apiUser: ApiUser): AuthUser {
   const role = API_ROLE_MAP[apiUser.role] ?? "EMPLEADO";
+  const nameParts = apiUser.name.trim().split(" ");
   return {
     id:          String(apiUser.id),
-    cedula:      "",
-    nombre:      apiUser.name.split(" ")[0] ?? apiUser.name,
-    apellido:    apiUser.name.split(" ").slice(1).join(" "),
+    cedula:      apiUser.national_id ?? "",
+    nombre:      nameParts[0] ?? apiUser.name,
+    apellido:    nameParts.slice(1).join(" "),
     email:       apiUser.email,
     role,
     roleLabel:   toRoleLabel(role),
-    departamento: "",
+    departamento: apiUser.department ?? "",
+    patientId:   apiUser.patient_id ? String(apiUser.patient_id) : undefined,
   };
 }
 
@@ -52,6 +54,7 @@ interface AuthState {
   user: AuthUser | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  isHydrated: boolean;
   error: string | null;
   login: (loginInput: string, password: string) => Promise<boolean>;
   logout: () => Promise<void>;
@@ -61,22 +64,17 @@ interface AuthState {
 
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       user: null,
       isAuthenticated: false,
       isLoading: false,
+      isHydrated: false,
       error: null,
 
-      /**
-       * login — acepta email o username.
-       * El token se guarda en memoria (api.ts) para no exponerlo en localStorage.
-       */
       login: async (loginInput: string, password: string): Promise<boolean> => {
         set({ isLoading: true, error: null });
         try {
           const { token, user } = await apiLogin(loginInput, password);
-
-          // Guardar token en memoria (NO en localStorage)
           setAuthToken(token);
 
           set({
@@ -96,34 +94,29 @@ export const useAuthStore = create<AuthState>()(
         }
       },
 
-      /**
-       * logout — revoca el token en el servidor y limpia estado local.
-       */
       logout: async () => {
         try {
           await apiLogout();
         } catch {
-          // Siempre limpiamos el estado local aunque falle la petición
+          // Limpieza garantizada aunque falle la red
         }
         setAuthToken(null);
         set({ user: null, isAuthenticated: false, error: null });
       },
 
-      /**
-       * hydrate — verifica sesión existente al recargar la página.
-       * Solo funciona si el token sigue en memoria (misma pestaña).
-       */
       hydrate: async () => {
-        if (!getAuthToken()) {
-          set({ user: null, isAuthenticated: false });
+        const token = getAuthToken();
+        if (!token) {
+          set({ user: null, isAuthenticated: false, isHydrated: true });
           return;
         }
+
         try {
           const { user } = await apiMe();
-          set({ user: mapApiUser(user), isAuthenticated: true });
+          set({ user: mapApiUser(user), isAuthenticated: true, isHydrated: true });
         } catch {
           setAuthToken(null);
-          set({ user: null, isAuthenticated: false });
+          set({ user: null, isAuthenticated: false, isHydrated: true });
         }
       },
 
@@ -131,11 +124,25 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: "saludmercal-auth",
-      // Solo persistimos el usuario (no el token — stays in memory only)
       partialize: (state) => ({
         user: state.user,
         isAuthenticated: state.isAuthenticated,
       }),
+      onRehydrateStorage: () => (state) => {
+        if (state) {
+          // Verificación de fondo al hidratar desde storage
+          state.hydrate();
+        } else {
+          useAuthStore.setState({ isHydrated: true });
+        }
+      },
     }
   )
 );
+
+// Escuchar eventos globales de desautenticación emitidos por apiFetch (401)
+if (typeof window !== "undefined") {
+  window.addEventListener("saludmercal:unauthorized", () => {
+    useAuthStore.getState().logout();
+  });
+}

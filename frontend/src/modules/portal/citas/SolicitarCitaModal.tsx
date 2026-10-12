@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { X, Calendar as CalendarIcon, Clock } from "lucide-react";
+import { X, Calendar as CalendarIcon, Clock, Loader2, AlertCircle } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
@@ -11,6 +11,7 @@ import { citaSchema, CitaFormValues } from "@/lib/schemas";
 import { useCitasStore } from "@/modules/citas/citas.store";
 import { useMedicosStore } from "@/modules/medicos/medicos.store";
 import { useAuthStore } from "@/modules/auth/auth.store";
+import { apiGetDoctorAvailability } from "@/lib/api";
 import { generarSlotsDisponibles } from "@/lib/date-utils";
 
 import { Calendar } from "@/components/ui/calendar";
@@ -29,6 +30,10 @@ export function SolicitarCitaModal({ open, onClose }: Props) {
   
   const [selectedEspecialidad, setSelectedEspecialidad] = useState("");
   const [calendarOpen, setCalendarOpen] = useState(false);
+  const [serverSlots, setServerSlots] = useState<string[] | null>(null);
+  const [loadingSlots, setLoadingSlots] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [isSubmittingForm, setIsSubmittingForm] = useState(false);
 
   const {
     register,
@@ -37,12 +42,12 @@ export function SolicitarCitaModal({ open, onClose }: Props) {
     reset,
     watch,
     setValue,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm<CitaFormValues>({
     resolver: zodResolver(citaSchema),
     defaultValues: {
       estado: "PENDIENTE",
-      pacienteId: user?.id ?? "",
+      pacienteId: user?.patientId ?? user?.id ?? "",
     },
   });
 
@@ -55,46 +60,95 @@ export function SolicitarCitaModal({ open, onClose }: Props) {
     (m) => m.activo && m.especialidadId === selectedEspecialidad
   );
   
-  const selectedMedico = medicos.find(m => m.id === watchMedicoId);
+  const selectedMedico = medicos.find((m) => m.id === watchMedicoId);
   const selectedDateObj = watchFecha ? new Date(`${watchFecha}T00:00:00`) : undefined;
 
-  // Calculamos los slots dinámicos basados en la fecha y el médico
-  const availableSlots = useMemo(() => {
+  // Local fallback slots
+  const fallbackSlots = useMemo(() => {
     if (!selectedMedico || !selectedDateObj) return [];
     return generarSlotsDisponibles(selectedMedico, selectedDateObj, citas);
   }, [selectedMedico, selectedDateObj, citas]);
 
-  // Si cambia el médico o la fecha, resetear la hora
+  const availableSlots = serverSlots !== null ? serverSlots : fallbackSlots;
+
+  // Fetch real slots from backend whenever doctor or date changes
   useEffect(() => {
     setValue("hora", "");
+    setServerSlots(null);
+
+    if (!watchMedicoId || !watchFecha) {
+      return;
+    }
+
+    let isMounted = true;
+    setLoadingSlots(true);
+
+    apiGetDoctorAvailability(watchMedicoId, watchFecha)
+      .then((res) => {
+        if (!isMounted) return;
+        if (res.slots && Array.isArray(res.slots)) {
+          setServerSlots(res.slots);
+        } else {
+          setServerSlots(null);
+        }
+      })
+      .catch(() => {
+        if (isMounted) setServerSlots(null);
+      })
+      .finally(() => {
+        if (isMounted) setLoadingSlots(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
   }, [watchMedicoId, watchFecha, setValue]);
 
-  useEffect(() => {
-    if (!open) {
-      reset({ estado: "PENDIENTE", pacienteId: user?.id ?? "", fecha: "", hora: "" });
-      setSelectedEspecialidad("");
-    }
-  }, [open, reset, user]);
-
-  const onSubmit = (data: CitaFormValues) => {
-    if (!user) return;
-    
-    const selectedEspecialidadObj = especialidades.find(e => e.id === selectedEspecialidad);
-
-    addCita({
-      pacienteId: user.id,
-      pacienteNombre: `${user.nombre} ${user.apellido}`,
-      pacienteCedula: user.cedula,
-      medicoId: data.medicoId,
-      medicoNombre: selectedMedico ? `${selectedMedico.nombre} ${selectedMedico.apellido}` : "",
-      especialidad: selectedEspecialidadObj?.nombre || "",
-      fecha: data.fecha,
-      hora: data.hora,
-      motivo: data.motivo,
+  const handleClose = useCallback(() => {
+    reset({
       estado: "PENDIENTE",
+      pacienteId: user?.patientId ?? user?.id ?? "",
+      fecha: "",
+      hora: "",
     });
-    
+    setSelectedEspecialidad("");
+    setServerSlots(null);
+    setSubmitError(null);
+    setIsSubmittingForm(false);
     onClose();
+  }, [reset, user, onClose]);
+
+  const onSubmit = async (data: CitaFormValues) => {
+    if (!user) return;
+    setIsSubmittingForm(true);
+    setSubmitError(null);
+    
+    const selectedEspecialidadObj = especialidades.find((e) => e.id === selectedEspecialidad);
+
+    try {
+      const ok = await addCita({
+        pacienteId: user.patientId ?? user.id,
+        pacienteNombre: `${user.nombre} ${user.apellido}`,
+        pacienteCedula: user.cedula,
+        medicoId: data.medicoId,
+        medicoNombre: selectedMedico ? `Dr. ${selectedMedico.nombre} ${selectedMedico.apellido}` : "",
+        especialidad: selectedEspecialidadObj?.nombre || selectedMedico?.especialidadNombre || "",
+        fecha: data.fecha,
+        hora: data.hora,
+        motivo: data.motivo,
+        estado: "PENDIENTE",
+      });
+
+      if (ok) {
+        handleClose();
+      } else {
+        setSubmitError("No se pudo agendar la cita. Verifique la disponibilidad del horario e intente de nuevo.");
+      }
+    } catch {
+      setSubmitError("Ocurrió un error inesperado al procesar la cita.");
+    } finally {
+      setIsSubmittingForm(false);
+    }
   };
 
   if (!open) return null;
@@ -106,22 +160,35 @@ export function SolicitarCitaModal({ open, onClose }: Props) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/40 dark:bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <div
+        className="absolute inset-0 bg-black/40 dark:bg-black/60 backdrop-blur-sm"
+        onClick={() => !isSubmittingForm && handleClose()}
+      />
 
       <div className="relative w-full max-w-lg bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden flex flex-col max-h-[90vh]">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-700 shrink-0">
           <div>
             <h2 className="text-slate-900 dark:text-white font-semibold text-base">Solicitar Cita</h2>
-            <p className="text-slate-500 dark:text-slate-400 text-xs mt-0.5">La cita quedará sujeta a confirmación</p>
+            <p className="text-slate-500 dark:text-slate-400 text-xs mt-0.5">La cita quedará sujeta a confirmación médica</p>
           </div>
           <button
-            onClick={onClose}
-            className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors"
+            type="button"
+            onClick={handleClose}
+            disabled={isSubmittingForm}
+            className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors disabled:opacity-50"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
+
+        {/* Error Alert */}
+        {submitError && (
+          <div className="mx-6 mt-4 p-3 rounded-xl bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 text-red-600 dark:text-red-400 text-xs flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 shrink-0" />
+            <span>{submitError}</span>
+          </div>
+        )}
 
         {/* Body */}
         <div className="overflow-y-auto flex-1 px-6 py-5">
@@ -138,6 +205,7 @@ export function SolicitarCitaModal({ open, onClose }: Props) {
                     setSelectedEspecialidad(e.target.value);
                     setValue("medicoId", "");
                   }}
+                  disabled={isSubmittingForm}
                 >
                   <option value="">Seleccione...</option>
                   {especialidades.map((e) => (
@@ -151,7 +219,7 @@ export function SolicitarCitaModal({ open, onClose }: Props) {
                 <select
                   {...register("medicoId")}
                   className={inputCls}
-                  disabled={!selectedEspecialidad}
+                  disabled={!selectedEspecialidad || isSubmittingForm}
                 >
                   <option value="">Seleccione un médico...</option>
                   {medicosDisponibles.map((m) => (
@@ -176,7 +244,7 @@ export function SolicitarCitaModal({ open, onClose }: Props) {
                       <PopoverTrigger asChild>
                         <button
                           type="button"
-                          disabled={!watchMedicoId}
+                          disabled={!watchMedicoId || isSubmittingForm}
                           className={cn(
                             "w-full flex items-center justify-between px-3 py-2.5 rounded-xl border bg-white dark:bg-slate-900 text-sm transition-all text-left font-normal",
                             !watchMedicoId ? "opacity-50 cursor-not-allowed border-slate-200 dark:border-slate-700 text-slate-400" : "border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white hover:border-emerald-500/50 hover:ring-2 hover:ring-emerald-500/10",
@@ -238,16 +306,24 @@ export function SolicitarCitaModal({ open, onClose }: Props) {
 
               {watchFecha && (
                 <div className="pt-2 border-t border-slate-200 dark:border-slate-700/50">
-                  <label className={labelCls}>Bloques Disponibles *</label>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className={labelCls}>Bloques Disponibles *</label>
+                    {loadingSlots && (
+                      <span className="flex items-center gap-1 text-[11px] text-emerald-600 dark:text-emerald-400">
+                        <Loader2 className="w-3 h-3 animate-spin" /> Consultando agenda...
+                      </span>
+                    )}
+                  </div>
                   {availableSlots.length > 0 ? (
                     <div className="flex flex-wrap gap-2 mt-2">
                       {availableSlots.map((slot) => (
                         <button
                           key={slot}
                           type="button"
+                          disabled={isSubmittingForm}
                           onClick={() => setValue("hora", slot, { shouldValidate: true })}
                           className={cn(
-                            "px-3 py-1.5 rounded-lg text-sm font-medium transition-all flex items-center gap-1.5",
+                            "px-3 py-1.5 rounded-lg text-sm font-medium transition-all flex items-center gap-1.5 cursor-pointer",
                             watchHora === slot
                               ? "bg-emerald-500 text-white shadow-md shadow-emerald-500/30"
                               : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:border-emerald-500/50 hover:bg-emerald-50 dark:hover:bg-emerald-500/10"
@@ -261,7 +337,9 @@ export function SolicitarCitaModal({ open, onClose }: Props) {
                   ) : (
                     <div className="p-4 bg-slate-100 dark:bg-slate-800/80 rounded-xl text-center">
                       <p className="text-sm text-slate-500 dark:text-slate-400">
-                        No hay horas disponibles para este día. Por favor, seleccione otra fecha.
+                        {loadingSlots
+                          ? "Cargando horarios disponibles..."
+                          : "No hay horas disponibles para este día. Por favor, seleccione otra fecha."}
                       </p>
                     </div>
                   )}
@@ -278,12 +356,13 @@ export function SolicitarCitaModal({ open, onClose }: Props) {
                 placeholder="Describa sus síntomas o razón de la cita..."
                 className={inputCls}
                 rows={3}
+                disabled={isSubmittingForm}
               />
               {errors.motivo && <p className={errorCls}>{errors.motivo.message}</p>}
             </div>
             
             {/* Ocultamos pacienteId ya que es autoasignado */}
-            <input type="hidden" {...register("pacienteId")} value={user?.id} />
+            <input type="hidden" {...register("pacienteId")} value={user?.patientId ?? user?.id} />
 
           </form>
         </div>
@@ -292,17 +371,19 @@ export function SolicitarCitaModal({ open, onClose }: Props) {
         <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-100 dark:border-slate-700 shrink-0">
           <button
             type="button"
-            onClick={onClose}
-            className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+            onClick={handleClose}
+            disabled={isSubmittingForm}
+            className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors disabled:opacity-50"
           >
             Cancelar
           </button>
           <button
             type="submit"
             form="solicitar-cita-form"
-            disabled={isSubmitting || !watchHora}
-            className="px-5 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white text-sm font-semibold shadow-md shadow-emerald-500/20 transition-all disabled:opacity-60"
+            disabled={isSubmittingForm || !watchHora}
+            className="flex items-center gap-2 px-5 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white text-sm font-semibold shadow-md shadow-emerald-500/20 transition-all disabled:opacity-60 cursor-pointer"
           >
+            {isSubmittingForm && <Loader2 className="w-4 h-4 animate-spin" />}
             Enviar Solicitud
           </button>
         </div>

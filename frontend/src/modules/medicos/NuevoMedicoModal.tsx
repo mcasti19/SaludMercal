@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { X, Upload, UserCircle2 } from "lucide-react";
+import { X, Upload, UserCircle2, AlertCircle } from "lucide-react";
 import { medicoSchema, MedicoFormValues } from "@/lib/schemas";
 import { useMedicosStore } from "./medicos.store";
 import { TURNOS_CONFIG } from "@/lib/constants";
@@ -32,6 +32,7 @@ const TURNO_OPTIONS = Object.entries(TURNOS_CONFIG).map(([k, v]) => ({
 export function NuevoMedicoModal({ open, onClose }: Props) {
   const { addMedico, especialidades } = useMedicosStore();
   const [fotoPreview, setFotoPreview] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const {
@@ -50,6 +51,7 @@ export function NuevoMedicoModal({ open, onClose }: Props) {
     if (!open) {
       reset({ activo: true, diasLaborables: [1, 2, 3, 4, 5] });
       setFotoPreview(null);
+      setSubmitError(null);
     }
   }, [open, reset]);
 
@@ -65,9 +67,10 @@ export function NuevoMedicoModal({ open, onClose }: Props) {
     reader.readAsDataURL(file);
   };
 
-  const onSubmit = (data: MedicoFormValues) => {
+  const onSubmit = async (data: MedicoFormValues) => {
+    setSubmitError(null);
     const especialidadObj = especialidades.find(e => e.id === data.especialidadId);
-    addMedico({
+    const ok = await addMedico({
       ...data,
       especialidadNombre: especialidadObj?.nombre || "",
       cedula: data.cedula || undefined,
@@ -75,7 +78,11 @@ export function NuevoMedicoModal({ open, onClose }: Props) {
       email: data.email || undefined,
       fotoPerfil: data.fotoPerfil || undefined,
     });
-    onClose();
+    if (ok) {
+      onClose();
+    } else {
+      setSubmitError(useMedicosStore.getState().error ?? "No se pudo registrar al médico.");
+    }
   };
 
   if (!open) return null;
@@ -111,6 +118,13 @@ export function NuevoMedicoModal({ open, onClose }: Props) {
         {/* Body */}
         <div className="overflow-y-auto flex-1 px-6 py-5">
           <form id="nuevo-medico-form" onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+            {submitError && (
+              <div className="flex items-center gap-2 p-3.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 text-sm">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span>{submitError}</span>
+              </div>
+            )}
+
             {/* Foto de perfil */}
             <div className="flex flex-col items-center gap-3">
               <div
@@ -277,9 +291,16 @@ export function NuevoMedicoModal({ open, onClose }: Props) {
             type="submit"
             form="nuevo-medico-form"
             disabled={isSubmitting}
-            className="px-5 py-2 rounded-xl bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white text-sm font-semibold shadow-md shadow-blue-500/20 transition-all disabled:opacity-60"
+            className="px-5 py-2 rounded-xl bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white text-sm font-semibold shadow-md shadow-blue-500/20 transition-all disabled:opacity-60 flex items-center gap-2"
           >
-            Registrar Médico
+            {isSubmitting ? (
+              <>
+                <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                Registrando...
+              </>
+            ) : (
+              "Registrar Médico"
+            )}
           </button>
         </div>
       </div>

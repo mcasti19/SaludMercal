@@ -1,12 +1,14 @@
 "use client";
 
-import { X } from "lucide-react";
+import { useState, useEffect } from "react";
+import { X, AlertCircle } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { citaSchema, CitaFormValues } from "@/lib/schemas";
-import { useCitasStore } from "@/modules/citas/citas.store";
+import { useCitasStore, getTodayLocalString } from "@/modules/citas/citas.store";
 import { Paciente, Medico } from "@/types";
 import { HORAS_DISPONIBLES } from "@/lib/constants";
+import { apiGetDoctorAvailability } from "@/lib/api";
 
 interface NuevaCitaModalProps {
   onClose: () => void;
@@ -16,30 +18,67 @@ interface NuevaCitaModalProps {
 
 export function NuevaCitaModal({ onClose, pacientes, medicos }: NuevaCitaModalProps) {
   const { addCita } = useCitasStore();
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [availableSlots, setAvailableSlots] = useState<string[]>(HORAS_DISPONIBLES);
+  const [loadingSlots, setLoadingSlots] = useState(false);
 
   const {
     register,
     handleSubmit,
     watch,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<CitaFormValues>({
     resolver: zodResolver(citaSchema),
     defaultValues: {
-      fecha: new Date().toISOString().split("T")[0],
+      fecha: getTodayLocalString(),
       estado: "PENDIENTE",
     },
   });
 
   const medicoId = watch("medicoId");
+  const fecha = watch("fecha");
   const selectedMedico = medicos.find((m) => m.id === medicoId);
 
-  const onSubmit = (data: CitaFormValues) => {
+  // Fetch available slots from backend when medico or fecha changes
+  useEffect(() => {
+    if (!medicoId || !fecha) {
+      setAvailableSlots(HORAS_DISPONIBLES);
+      return;
+    }
+
+    let isMounted = true;
+    setLoadingSlots(true);
+
+    apiGetDoctorAvailability(medicoId, fecha)
+      .then((res) => {
+        if (!isMounted) return;
+        if (res.slots && res.slots.length > 0) {
+          setAvailableSlots(res.slots);
+        } else {
+          setAvailableSlots(HORAS_DISPONIBLES);
+        }
+      })
+      .catch(() => {
+        if (isMounted) setAvailableSlots(HORAS_DISPONIBLES);
+      })
+      .finally(() => {
+        if (isMounted) setLoadingSlots(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [medicoId, fecha]);
+
+  const onSubmit = async (data: CitaFormValues) => {
+    setSubmitError(null);
     const paciente = pacientes.find((p) => p.id === data.pacienteId);
     const medico = medicos.find((m) => m.id === data.medicoId);
 
     if (!paciente || !medico) return;
 
-    addCita({
+    const ok = await addCita({
       pacienteId: paciente.id,
       pacienteNombre: `${paciente.nombre} ${paciente.apellido}`,
       pacienteCedula: paciente.cedula,
@@ -53,7 +92,13 @@ export function NuevaCitaModal({ onClose, pacientes, medicos }: NuevaCitaModalPr
       notas: data.notas,
     });
 
-    onClose();
+    if (ok) {
+      onClose();
+    } else {
+      setSubmitError(
+        useCitasStore.getState().error ?? "No se pudo agendar la cita. Verifique la disponibilidad."
+      );
+    }
   };
 
   return (
@@ -74,6 +119,13 @@ export function NuevaCitaModal({ onClose, pacientes, medicos }: NuevaCitaModalPr
 
         {/* Form */}
         <form onSubmit={handleSubmit(onSubmit)} id="nueva-cita-form" className="p-6 space-y-4">
+          {submitError && (
+            <div className="flex items-center gap-2 p-3.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 text-sm">
+              <AlertCircle className="w-4 h-4 shrink-0" />
+              <span>{submitError}</span>
+            </div>
+          )}
+
           {/* Paciente */}
           <div className="space-y-1.5">
             <label className="block text-sm font-medium text-slate-600 dark:text-slate-300">
@@ -140,16 +192,19 @@ export function NuevaCitaModal({ onClose, pacientes, medicos }: NuevaCitaModalPr
               )}
             </div>
             <div className="space-y-1.5">
-              <label className="block text-sm font-medium text-slate-600 dark:text-slate-300">
-                Hora
+              <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 flex items-center justify-between">
+                <span>Hora</span>
+                {loadingSlots && (
+                  <span className="text-[10px] text-blue-400 font-normal">Consultando turnos...</span>
+                )}
               </label>
               <select
                 id="nueva-cita-hora-select"
                 {...register("hora")}
                 className="w-full px-3 py-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all"
               >
-                <option value="">Seleccionar...</option>
-                {HORAS_DISPONIBLES.map((h) => (
+                <option value="">Seleccionar hora...</option>
+                {availableSlots.map((h) => (
                   <option key={h} value={h}>{h}</option>
                 ))}
               </select>
@@ -203,9 +258,16 @@ export function NuevaCitaModal({ onClose, pacientes, medicos }: NuevaCitaModalPr
               type="submit"
               id="nueva-cita-submit-btn"
               disabled={isSubmitting}
-              className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-blue-500 to-cyan-500 text-white text-sm font-semibold hover:from-blue-400 hover:to-cyan-400 transition-all disabled:opacity-60"
+              className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-blue-500 to-cyan-500 text-white text-sm font-semibold hover:from-blue-400 hover:to-cyan-400 transition-all disabled:opacity-60 flex items-center justify-center gap-2"
             >
-              Registrar Cita
+              {isSubmitting ? (
+                <>
+                  <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  Agendando...
+                </>
+              ) : (
+                "Registrar Cita"
+              )}
             </button>
           </div>
         </form>

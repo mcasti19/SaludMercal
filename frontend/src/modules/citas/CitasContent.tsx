@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   Plus,
   Search,
   CalendarClock,
   Filter,
   RefreshCw,
+  AlertCircle,
 } from "lucide-react";
 import { useCitasStore } from "@/modules/citas/citas.store";
 import { usePacientesStore } from "@/modules/pacientes/pacientes.store";
@@ -28,11 +29,27 @@ const ESTADOS: Array<CitaEstado | "TODAS"> = [
 ];
 
 export function CitasContent() {
-  const { citas, search, setSearch, filterEstado, setFilterEstado, updateEstado } =
-    useCitasStore();
-  const { medicos } = useMedicosStore();
+  const {
+    citas,
+    search,
+    setSearch,
+    filterEstado,
+    setFilterEstado,
+    updateEstado,
+    fetchCitas,
+    isLoading,
+    error,
+  } = useCitasStore();
+  const { medicos, fetchMedicos } = useMedicosStore();
+  const { pacientes, fetchPacientes } = usePacientesStore();
   const [showNuevaModal, setShowNuevaModal] = useState(false);
   const [citaToEdit, setCitaToEdit] = useState<Cita | null>(null);
+
+  useEffect(() => {
+    fetchCitas();
+    fetchMedicos();
+    fetchPacientes();
+  }, [fetchCitas, fetchMedicos, fetchPacientes]);
 
   const filtered = useMemo(() => {
     let result = citas;
@@ -59,6 +76,14 @@ export function CitasContent() {
 
   return (
     <div className="p-6 space-y-6">
+      {/* Error Alert */}
+      {error && (
+        <div className="flex items-center gap-2 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 text-sm">
+          <AlertCircle className="w-4 h-4 shrink-0" />
+          <span>{error}</span>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>
@@ -150,7 +175,12 @@ export function CitasContent() {
 
       {/* Table */}
       <div className="bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 rounded-2xl overflow-hidden">
-        {filtered.length === 0 ? (
+        {isLoading && citas.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 text-center">
+            <div className="w-8 h-8 border-2 border-blue-500/30 border-t-blue-500 rounded-full animate-spin mb-3" />
+            <p className="text-slate-500 dark:text-slate-400 font-medium">Cargando citas médicas...</p>
+          </div>
+        ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center">
             <CalendarClock className="w-12 h-12 text-slate-600 mb-3" />
             <p className="text-slate-500 dark:text-slate-400 font-medium">No se encontraron citas</p>
@@ -262,7 +292,7 @@ export function CitasContent() {
       {showNuevaModal && (
         <NuevaCitaModal
           onClose={() => setShowNuevaModal(false)}
-          pacientes={usePacientesStore.getState().pacientes}
+          pacientes={pacientes}
           medicos={medicos}
         />
       )}

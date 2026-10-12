@@ -1,20 +1,32 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuthStore } from "@/modules/auth/auth.store";
 import { useRepososStore } from "@/modules/reposos/reposos.store";
 import { NuevoReposoModal } from "./NuevoReposoModal";
-import { FileBox, Plus, Calendar, Clock, CheckCircle2, XCircle } from "lucide-react";
+import { FileBox, Plus, Calendar, Clock, CheckCircle2, XCircle, Loader2, AlertCircle } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import { ReposoEstado } from "@/types";
 
 export function PortalRepososContent() {
   const { user } = useAuthStore();
-  const { reposos } = useRepososStore();
+  const { reposos, isLoading, error, fetchReposos } = useRepososStore();
   const [showNuevo, setShowNuevo] = useState(false);
 
-  // Filter reposos for the current employee
-  const misReposos = reposos.filter((r) => r.empleadoId === user?.id);
+  useEffect(() => {
+    fetchReposos();
+  }, [fetchReposos]);
+
+  // For employee role, the backend already scopes to their patient record.
+  // We additionally match against patientId or user id as fallback.
+  const misReposos =
+    user?.role === "EMPLEADO"
+      ? reposos
+      : reposos.filter(
+          (r) =>
+            r.empleadoId === user?.patientId ||
+            r.empleadoId === user?.id
+        );
 
   const getEstadoBadge = (estado: ReposoEstado) => {
     switch (estado) {
@@ -54,15 +66,36 @@ export function PortalRepososContent() {
         </div>
         <button
           onClick={() => setShowNuevo(true)}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white text-sm font-semibold shadow-lg shadow-emerald-500/20 transition-all"
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white text-sm font-semibold shadow-lg shadow-emerald-500/20 transition-all cursor-pointer"
         >
           <Plus className="w-4 h-4" />
           Cargar Reposo
         </button>
       </div>
 
+      {/* Error Banner */}
+      {error && (
+        <div className="flex items-center gap-3 p-4 rounded-xl bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 text-red-600 dark:text-red-400 text-sm">
+          <AlertCircle className="w-5 h-5 shrink-0" />
+          <p className="flex-1 font-medium">{error}</p>
+          <button
+            onClick={() => fetchReposos()}
+            className="text-xs font-semibold underline hover:text-red-700"
+          >
+            Reintentar
+          </button>
+        </div>
+      )}
+
       {/* List */}
-      {misReposos.length === 0 ? (
+      {isLoading && reposos.length === 0 ? (
+        <div className="bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 rounded-2xl p-12 text-center flex flex-col items-center justify-center">
+          <Loader2 className="w-8 h-8 animate-spin text-emerald-500 mb-3" />
+          <p className="font-medium text-sm text-slate-500 dark:text-slate-400">
+            Cargando sus reposos médicos...
+          </p>
+        </div>
+      ) : misReposos.length === 0 ? (
         <div className="bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 rounded-2xl p-12 text-center">
           <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 rounded-full flex items-center justify-center mx-auto mb-4">
             <FileBox className="w-8 h-8" />
@@ -82,7 +115,14 @@ export function PortalRepososContent() {
               {/* Preview Imagen */}
               <div className="w-full md:w-32 h-32 rounded-xl bg-slate-100 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 overflow-hidden shrink-0 flex items-center justify-center">
                 {reposo.adjuntoBase64 ? (
-                  <img src={reposo.adjuntoBase64} alt="Reposo" className="w-full h-full object-cover opacity-80 hover:opacity-100 transition-opacity cursor-pointer" />
+                  <img
+                    src={reposo.adjuntoBase64}
+                    alt="Reposo"
+                    className="w-full h-full object-cover opacity-80 hover:opacity-100 transition-opacity"
+                    onError={(e) => {
+                      e.currentTarget.style.display = "none";
+                    }}
+                  />
                 ) : (
                   <FileBox className="w-8 h-8 text-slate-300 dark:text-slate-600" />
                 )}
@@ -96,7 +136,7 @@ export function PortalRepososContent() {
                       {reposo.tipo}
                     </h3>
                     <p className="text-slate-500 dark:text-slate-400 text-sm mt-0.5">
-                      Dr. {reposo.medicoTratante}
+                      {reposo.medicoTratante}
                     </p>
                   </div>
                   <div className="shrink-0">{getEstadoBadge(reposo.estado)}</div>

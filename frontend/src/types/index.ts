@@ -15,6 +15,7 @@ export interface AuthUser {
   role: UserRole;
   roleLabel: string;
   departamento: string;
+  patientId?: string;
 }
 
 // Paciente

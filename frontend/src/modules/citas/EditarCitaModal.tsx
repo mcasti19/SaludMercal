@@ -1,6 +1,7 @@
 "use client";
 
-import { X } from "lucide-react";
+import { useState } from "react";
+import { X, AlertCircle } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { citaSchema, CitaFormValues } from "@/lib/schemas";
@@ -15,6 +16,7 @@ interface EditarCitaModalProps {
 
 export function EditarCitaModal({ cita, onClose }: EditarCitaModalProps) {
   const { updateCita } = useCitasStore();
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const {
     register,
@@ -33,15 +35,23 @@ export function EditarCitaModal({ cita, onClose }: EditarCitaModalProps) {
     },
   });
 
-  const onSubmit = (data: CitaFormValues) => {
-    updateCita(cita.id, {
+  const onSubmit = async (data: CitaFormValues) => {
+    setSubmitError(null);
+    const ok = await updateCita(cita.id, {
       fecha: data.fecha,
       hora: data.hora,
       estado: data.estado as CitaEstado,
       motivo: data.motivo,
       notas: data.notas,
     });
-    onClose();
+
+    if (ok) {
+      onClose();
+    } else {
+      setSubmitError(
+        useCitasStore.getState().error ?? "No se pudieron actualizar los datos de la cita."
+      );
+    }
   };
 
   const ESTADOS_CITA: CitaEstado[] = [
@@ -73,6 +83,13 @@ export function EditarCitaModal({ cita, onClose }: EditarCitaModalProps) {
 
         {/* Form */}
         <form onSubmit={handleSubmit(onSubmit)} id="editar-cita-form" className="p-6 space-y-4">
+          {submitError && (
+            <div className="flex items-center gap-2 p-3.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 text-sm">
+              <AlertCircle className="w-4 h-4 shrink-0" />
+              <span>{submitError}</span>
+            </div>
+          )}
+
           {/* Paciente (read-only) */}
           <div className="p-3 rounded-xl bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50">
             <p className="text-slate-500 dark:text-slate-400 text-xs">Paciente</p>
@@ -165,9 +182,16 @@ export function EditarCitaModal({ cita, onClose }: EditarCitaModalProps) {
               type="submit"
               id="editar-cita-submit-btn"
               disabled={isSubmitting}
-              className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-blue-500 to-cyan-500 text-white text-sm font-semibold hover:from-blue-400 hover:to-cyan-400 transition-all disabled:opacity-60"
+              className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-blue-500 to-cyan-500 text-white text-sm font-semibold hover:from-blue-400 hover:to-cyan-400 transition-all disabled:opacity-60 flex items-center justify-center gap-2"
             >
-              Guardar Cambios
+              {isSubmitting ? (
+                <>
+                  <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  Guardando...
+                </>
+              ) : (
+                "Guardar Cambios"
+              )}
             </button>
           </div>
         </form>
