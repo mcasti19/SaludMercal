@@ -1,8 +1,13 @@
 <?php
 
+use App\Http\Middleware\EnsurePasswordIsChanged;
+use Illuminate\Auth\AuthenticationException;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Request;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -12,11 +17,30 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        // CORS — permite peticiones del frontend Next.js
-        $middleware->api(prepend: [
-            \Illuminate\Http\Middleware\HandleCors::class,
+        $middleware->alias([
+            'password.changed' => EnsurePasswordIsChanged::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        // The API always answers JSON, regardless of the Accept header.
+        $exceptions->shouldRenderJsonWhen(
+            fn (Request $request) => $request->is('api/*') || $request->expectsJson()
+        );
+
+        $exceptions->render(function (AuthenticationException $e, Request $request) {
+            if ($request->is('api/*')) {
+                return response()->json(['message' => 'Unauthenticated.'], 401);
+            }
+        });
+
+        // Do not leak model class names in 404 responses.
+        $exceptions->render(function (NotFoundHttpException $e, Request $request) {
+            if ($request->is('api/*')) {
+                $message = $e->getPrevious() instanceof ModelNotFoundException
+                    ? 'Resource not found.'
+                    : 'Endpoint not found.';
+
+                return response()->json(['message' => $message], 404);
+            }
+        });
     })->create();

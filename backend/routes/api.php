@@ -1,20 +1,58 @@
 <?php
 
-use App\Http\Controllers\Api\AuthController;
-use Illuminate\Http\Request;
+use App\Http\Controllers\Api\V1\AppointmentController;
+use App\Http\Controllers\Api\V1\AuditLogController;
+use App\Http\Controllers\Api\V1\AuthController;
+use App\Http\Controllers\Api\V1\DepartmentController;
+use App\Http\Controllers\Api\V1\DoctorController;
+use App\Http\Controllers\Api\V1\LocationController;
+use App\Http\Controllers\Api\V1\MedicalLeaveController;
+use App\Http\Controllers\Api\V1\PatientController;
+use App\Http\Controllers\Api\V1\ReportController;
+use App\Http\Controllers\Api\V1\SpecialtyController;
+use App\Http\Controllers\Api\V1\UserController;
 use Illuminate\Support\Facades\Route;
 
-/*
-|--------------------------------------------------------------------------
-| API Routes — SaludMercal
-|--------------------------------------------------------------------------
-*/
+Route::prefix('v1')->group(function () {
 
-// ── Rutas públicas (sin autenticación) ─────────────────────────────────────
-Route::post('/login', [AuthController::class, 'login']);
+    // ── Public ────────────────────────────────────────────────────────────
+    Route::post('/auth/login', [AuthController::class, 'login'])->middleware('throttle:login');
 
-// ── Rutas protegidas (requieren sesión Sanctum) ─────────────────────────────
-Route::middleware(['auth:sanctum'])->group(function () {
-    Route::get('/me', [AuthController::class, 'me']);
-    Route::post('/logout', [AuthController::class, 'logout']);
+    // ── Authenticated ─────────────────────────────────────────────────────
+    Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
+        Route::get('/auth/me', [AuthController::class, 'me']);
+        Route::post('/auth/logout', [AuthController::class, 'logout']);
+        Route::post('/auth/change-password', [AuthController::class, 'changePassword']);
+
+        // Everything below requires the account not to be flagged for a password change.
+        Route::middleware('password.changed')->group(function () {
+
+            Route::apiResource('users', UserController::class);
+            Route::get('audit-logs', [AuditLogController::class, 'index']);
+
+            Route::apiResource('departments', DepartmentController::class);
+            Route::apiResource('locations', LocationController::class);
+            Route::apiResource('specialties', SpecialtyController::class);
+
+            Route::get('patients/me', [PatientController::class, 'me']);
+            Route::apiResource('patients', PatientController::class);
+
+            Route::get('doctors/{doctor}/availability', [DoctorController::class, 'availability']);
+            Route::post('doctors/{doctor}/time-offs', [DoctorController::class, 'storeTimeOff']);
+            Route::delete('doctors/{doctor}/time-offs/{timeOff}', [DoctorController::class, 'destroyTimeOff']);
+            Route::apiResource('doctors', DoctorController::class);
+
+            Route::post('appointments/{appointment}/status', [AppointmentController::class, 'transition']);
+            Route::patch('appointments/{appointment}/reschedule', [AppointmentController::class, 'reschedule']);
+            Route::apiResource('appointments', AppointmentController::class)->except('update');
+
+            Route::post('medical-leaves/{medical_leave}/review', [MedicalLeaveController::class, 'review']);
+            Route::get('medical-leaves/{medical_leave}/attachment', [MedicalLeaveController::class, 'attachment']);
+            Route::apiResource('medical-leaves', MedicalLeaveController::class)
+                ->parameters(['medical-leaves' => 'medical_leave'])
+                ->except('update');
+
+            Route::get('reports/summary', [ReportController::class, 'summary']);
+        });
+    });
 });

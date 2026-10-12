@@ -77,16 +77,16 @@ export async function apiLogin(
   login: string,
   password: string
 ): Promise<LoginResponse> {
-  return apiFetch<LoginResponse>("/login", {
+  return apiFetch<LoginResponse>("/v1/auth/login", {
     method: "POST",
     body: JSON.stringify({ login, password }),
   });
 }
 
 export async function apiLogout(): Promise<void> {
-  await apiFetch("/logout", { method: "POST" });
+  await apiFetch("/v1/auth/logout", { method: "POST" });
 }
 
 export async function apiMe(): Promise<MeResponse> {
-  return apiFetch<MeResponse>("/me");
+  return apiFetch<MeResponse>("/v1/auth/me");
 }

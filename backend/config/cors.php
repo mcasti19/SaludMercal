@@ -26,7 +26,7 @@ return [
 
     'exposed_headers' => [],
 
-    'max_age' => 0,
+    'max_age' => 600,
 
     // CRÍTICO para Sanctum cookie-based auth:
     // permite que el navegador envíe las cookies de sesión en peticiones cross-origin

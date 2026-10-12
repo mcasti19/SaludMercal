@@ -25,15 +25,25 @@ function toRoleLabel(role: string): string {
   return labels[role] ?? role;
 }
 
+/** API role (backend enum value) → UI role identifier */
+const API_ROLE_MAP: Record<string, AuthUser["role"]> = {
+  admin:        "ADMIN",
+  receptionist: "RECEPCION",
+  doctor:       "MEDICO",
+  nurse:        "ENFERMERIA",
+  employee:     "EMPLEADO",
+};
+
 function mapApiUser(apiUser: { id: number; name: string; username: string; email: string; role: string }): AuthUser {
+  const role = API_ROLE_MAP[apiUser.role] ?? "EMPLEADO";
   return {
     id:          String(apiUser.id),
     cedula:      "",
     nombre:      apiUser.name.split(" ")[0] ?? apiUser.name,
-    apellido:    apiUser.name.split(" ").slice(1).join(" ") ?? "",
+    apellido:    apiUser.name.split(" ").slice(1).join(" "),
     email:       apiUser.email,
-    role:        apiUser.role as AuthUser["role"],
-    roleLabel:   toRoleLabel(apiUser.role),
+    role,
+    roleLabel:   toRoleLabel(role),
     departamento: "",
   };
 }
