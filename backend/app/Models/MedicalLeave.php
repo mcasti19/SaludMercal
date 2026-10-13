@@ -6,6 +6,7 @@ use App\Enums\MedicalLeaveStatus;
 use App\Enums\MedicalLeaveType;
 use App\Enums\UserRole;
 use App\Models\Concerns\Auditable;
+use App\Models\Concerns\BelongsToLocation;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -14,10 +15,10 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class MedicalLeave extends Model
 {
-    use Auditable, HasFactory, SoftDeletes;
+    use Auditable, BelongsToLocation, HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'patient_id', 'doctor_id', 'type', 'start_date', 'end_date', 'days', 'diagnosis',
+        'patient_id', 'doctor_id', 'location_id', 'type', 'start_date', 'end_date', 'days', 'diagnosis',
         'status', 'attachment_path', 'reviewed_by', 'reviewed_at', 'review_notes',
     ];
 

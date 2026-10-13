@@ -24,6 +24,7 @@ describe("Auth Store & Redirection (src/modules/auth/auth.store.ts)", () => {
 
   describe("getRedirectPath", () => {
     it("redirects administrative roles to dashboard ('/')", () => {
+      expect(getRedirectPath("SUPERADMIN")).toBe("/");
       expect(getRedirectPath("ADMIN")).toBe("/");
       expect(getRedirectPath("RECEPCION")).toBe("/");
       expect(getRedirectPath("MEDICO")).toBe("/");

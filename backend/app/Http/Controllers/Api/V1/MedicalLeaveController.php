@@ -61,6 +61,11 @@ class MedicalLeaveController extends Controller
             $data['attachment_path'] = $request->file('attachment')->store('medical-leaves', self::DISK);
         }
 
+        $patient = \App\Models\Patient::withoutGlobalScopes()->find($data['patient_id']);
+        if ($patient && empty($data['location_id'])) {
+            $data['location_id'] = $patient->location_id ?? $request->user()->location_id;
+        }
+
         $leave = MedicalLeave::create($data);
 
         return (new MedicalLeaveResource($leave->refresh()->load(self::RELATIONS)))

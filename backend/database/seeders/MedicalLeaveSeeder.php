@@ -40,6 +40,7 @@ class MedicalLeaveSeeder extends Seeder
             ],
             [
                 'doctor_id' => $traumaDoctor?->id,
+                'location_id' => $primaryEmployee->location_id,
                 'type' => MedicalLeaveType::Occupational,
                 'end_date' => $today->copy()->subDays(3)->toDateString(),
                 'days' => 3,
@@ -59,6 +60,7 @@ class MedicalLeaveSeeder extends Seeder
             ],
             [
                 'doctor_id' => $generalDoctor?->id,
+                'location_id' => $primaryEmployee->location_id,
                 'type' => MedicalLeaveType::Illness,
                 'end_date' => $today->copy()->addDays(3)->toDateString(),
                 'days' => 4,
@@ -125,6 +127,7 @@ class MedicalLeaveSeeder extends Seeder
                 ],
                 [
                     'doctor_id' => $leave['doctor']?->id,
+                    'location_id' => $leave['patient']->location_id,
                     'type' => $leave['type'],
                     'end_date' => $endDate,
                     'days' => $leave['duration'],

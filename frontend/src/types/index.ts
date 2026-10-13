@@ -4,7 +4,7 @@
 // ============================================================
 
 // Auth / Session
-export type UserRole = "ADMIN" | "RECEPCION" | "MEDICO" | "ENFERMERIA" | "EMPLEADO";
+export type UserRole = "SUPERADMIN" | "ADMIN" | "RECEPCION" | "MEDICO" | "ENFERMERIA" | "EMPLEADO";
 
 export interface AuthUser {
   id: string;
@@ -16,6 +16,10 @@ export interface AuthUser {
   roleLabel: string;
   departamento: string;
   patientId?: string;
+  locationId?: number;
+  locationName?: string;
+  locationState?: string;
+  isHeadquarters?: boolean;
 }
 
 // Paciente

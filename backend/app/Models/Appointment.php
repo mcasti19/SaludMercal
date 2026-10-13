@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\AppointmentStatus;
 use App\Enums\UserRole;
 use App\Models\Concerns\Auditable;
+use App\Models\Concerns\BelongsToLocation;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -15,7 +16,7 @@ use Illuminate\Support\Str;
 
 class Appointment extends Model
 {
-    use Auditable, HasFactory, SoftDeletes;
+    use Auditable, BelongsToLocation, HasFactory, SoftDeletes;
 
     protected $fillable = [
         'code', 'patient_id', 'doctor_id', 'specialty_id', 'location_id', 'scheduled_date',

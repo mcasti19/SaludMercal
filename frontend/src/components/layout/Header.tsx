@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { Bell, LogOut, ChevronDown } from "lucide-react";
+import { Bell, LogOut, ChevronDown, Building2, MapPin, Globe } from "lucide-react";
 import { useAuthStore } from "@/modules/auth/auth.store";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
@@ -34,6 +34,32 @@ export function Header() {
           </h2>
           <p className="text-slate-500 dark:text-slate-400 text-xs">Mercal C.A.</p>
         </div>
+
+        {/* Location / Scope Badge */}
+        {user && (
+          <div className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100/90 dark:bg-slate-800/90 border border-slate-200/80 dark:border-slate-700/60 text-xs shadow-xs ml-2">
+            {user.role === "SUPERADMIN" ? (
+              <span className="flex items-center gap-1.5 text-blue-600 dark:text-cyan-400 font-semibold">
+                <Globe className="w-3.5 h-3.5" />
+                <span>Ámbito Nacional (24 Estados + Sede Central)</span>
+              </span>
+            ) : user.isHeadquarters ? (
+              <span className="flex items-center gap-1.5 text-blue-700 dark:text-blue-300 font-semibold">
+                <Building2 className="w-3.5 h-3.5 text-blue-500" />
+                <span>Sede Central</span>
+                <span className="text-slate-500 dark:text-slate-400 font-normal">(Torre Caracas)</span>
+              </span>
+            ) : (
+              <span className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300 font-medium">
+                <MapPin className="w-3.5 h-3.5 text-emerald-500" />
+                <span>{user.locationName ?? "Sede Regional"}</span>
+                {user.locationState && (
+                  <span className="text-slate-500 dark:text-slate-400">({user.locationState})</span>
+                )}
+              </span>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Right side */}
@@ -89,9 +115,22 @@ export function Header() {
                     {user?.nombre} {user?.apellido}
                   </p>
                   <p className="text-slate-500 dark:text-slate-400 text-xs mt-0.5">{user?.email}</p>
-                  <span className="inline-flex mt-1.5 items-center px-2 py-0.5 rounded-md bg-blue-500/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-300 text-xs font-medium">
-                    {user?.roleLabel}
-                  </span>
+                  <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-blue-500/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-300 text-xs font-medium">
+                      {user?.roleLabel}
+                    </span>
+                    {user?.isHeadquarters ? (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 text-[11px] font-medium">
+                        <Building2 className="w-3 h-3 text-blue-500" />
+                        Sede Central
+                      </span>
+                    ) : user?.locationName ? (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 text-[11px] font-medium">
+                        <MapPin className="w-3 h-3 text-emerald-500" />
+                        {user.locationName}
+                      </span>
+                    ) : null}
+                  </div>
                 </div>
                 <div className="p-1.5">
                   <button

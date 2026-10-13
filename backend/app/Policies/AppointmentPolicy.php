@@ -23,13 +23,17 @@ class AppointmentPolicy
 
     public function create(User $user): bool
     {
-        return $user->hasRole(UserRole::Admin, UserRole::Receptionist, UserRole::Employee);
+        return $user->hasRole(UserRole::SuperAdmin, UserRole::Admin, UserRole::Receptionist, UserRole::Employee);
     }
 
     public function reschedule(User $user, Appointment $appointment): bool
     {
+        if ($this->isOwner($user, $appointment) || $user->hasNationalScope()) {
+            return true;
+        }
+
         return $user->hasRole(UserRole::Admin, UserRole::Receptionist)
-            || $this->isOwner($user, $appointment);
+            && (is_null($user->location_id) || $user->location_id === $appointment->location_id);
     }
 
     /**
@@ -37,8 +41,12 @@ class AppointmentPolicy
      */
     public function transition(User $user, Appointment $appointment, AppointmentStatus $target): bool
     {
+        if (! $user->hasNationalScope() && $user->role->isStaff() && $user->location_id && $user->location_id !== $appointment->location_id) {
+            return false;
+        }
+
         return match ($user->role) {
-            UserRole::Admin, UserRole::Receptionist => true,
+            UserRole::SuperAdmin, UserRole::Admin, UserRole::Receptionist => true,
             UserRole::Nurse => in_array($target, [AppointmentStatus::Confirmed, AppointmentStatus::InProgress], true),
             UserRole::Doctor => $this->isAssignedDoctor($user, $appointment)
                 && in_array($target, [AppointmentStatus::InProgress, AppointmentStatus::Completed, AppointmentStatus::NoShow], true),
@@ -48,7 +56,12 @@ class AppointmentPolicy
 
     public function delete(User $user, Appointment $appointment): bool
     {
-        return $user->isAdmin();
+        if ($user->hasNationalScope()) {
+            return true;
+        }
+
+        return $user->isAdmin()
+            && (is_null($user->location_id) || $user->location_id === $appointment->location_id);
     }
 
     private function isOwner(User $user, Appointment $appointment): bool

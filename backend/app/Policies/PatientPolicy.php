@@ -15,21 +15,39 @@ class PatientPolicy
 
     public function view(User $user, Patient $patient): bool
     {
-        return $user->role->isStaff() || $patient->user_id === $user->id;
+        if ($user->hasNationalScope()) {
+            return true;
+        }
+
+        if ($user->role === UserRole::Employee) {
+            return $patient->user_id === $user->id;
+        }
+
+        return $user->role->isStaff() && (is_null($user->location_id) || $user->location_id === $patient->location_id);
     }
 
     public function create(User $user): bool
     {
-        return $user->hasRole(UserRole::Admin, UserRole::Receptionist);
+        return $user->hasRole(UserRole::SuperAdmin, UserRole::Admin, UserRole::Receptionist);
     }
 
     public function update(User $user, Patient $patient): bool
     {
-        return $user->hasRole(UserRole::Admin, UserRole::Receptionist);
+        if ($user->hasNationalScope()) {
+            return true;
+        }
+
+        return $user->hasRole(UserRole::Admin, UserRole::Receptionist)
+            && (is_null($user->location_id) || $user->location_id === $patient->location_id);
     }
 
     public function delete(User $user, Patient $patient): bool
     {
-        return $user->isAdmin();
+        if ($user->hasNationalScope()) {
+            return true;
+        }
+
+        return $user->isAdmin()
+            && (is_null($user->location_id) || $user->location_id === $patient->location_id);
     }
 }

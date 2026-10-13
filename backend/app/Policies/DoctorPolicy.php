@@ -24,11 +24,21 @@ class DoctorPolicy
 
     public function update(User $user, Doctor $doctor): bool
     {
-        return $user->isAdmin();
+        if ($user->hasNationalScope()) {
+            return true;
+        }
+
+        return $user->isAdmin()
+            && (is_null($user->location_id) || $user->location_id === $doctor->location_id);
     }
 
     public function delete(User $user, Doctor $doctor): bool
     {
-        return $user->isAdmin();
+        if ($user->hasNationalScope()) {
+            return true;
+        }
+
+        return $user->isAdmin()
+            && (is_null($user->location_id) || $user->location_id === $doctor->location_id);
     }
 }

@@ -6,7 +6,7 @@ import { AuthUser } from "@/types";
 import { apiLogin, apiLogout, apiMe, setAuthToken, getAuthToken, ApiUser } from "@/lib/api";
 
 /** Roles con acceso al panel de administración */
-export const ADMIN_ROLES = ["ADMIN", "RECEPCION", "MEDICO", "ENFERMERIA"] as const;
+export const ADMIN_ROLES = ["SUPERADMIN", "ADMIN", "RECEPCION", "MEDICO", "ENFERMERIA"] as const;
 
 /** Retorna la ruta de inicio según el rol del usuario */
 export function getRedirectPath(role: AuthUser["role"]): string {
@@ -16,7 +16,8 @@ export function getRedirectPath(role: AuthUser["role"]): string {
 /** Mapea el rol a una etiqueta legible */
 function toRoleLabel(role: string): string {
   const labels: Record<string, string> = {
-    ADMIN:      "Administrador",
+    SUPERADMIN: "Super Administrador",
+    ADMIN:      "Administrador de Sede",
     RECEPCION:  "Recepción",
     MEDICO:     "Médico",
     ENFERMERIA: "Enfermería",
@@ -27,6 +28,7 @@ function toRoleLabel(role: string): string {
 
 /** API role (backend enum value) → UI role identifier */
 const API_ROLE_MAP: Record<string, AuthUser["role"]> = {
+  super_admin:  "SUPERADMIN",
   admin:        "ADMIN",
   receptionist: "RECEPCION",
   doctor:       "MEDICO",
@@ -47,6 +49,10 @@ function mapApiUser(apiUser: ApiUser): AuthUser {
     roleLabel:   toRoleLabel(role),
     departamento: apiUser.department ?? "",
     patientId:   apiUser.patient_id ? String(apiUser.patient_id) : undefined,
+    locationId:  apiUser.location_id ?? undefined,
+    locationName: apiUser.location?.name ?? undefined,
+    locationState: apiUser.location?.state ?? undefined,
+    isHeadquarters: apiUser.location?.is_headquarters ?? false,
   };
 }
 

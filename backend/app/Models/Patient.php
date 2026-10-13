@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\Gender;
 use App\Models\Concerns\Auditable;
+use App\Models\Concerns\BelongsToLocation;
 use App\Models\Concerns\SearchesColumns;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -15,7 +16,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Patient extends Model
 {
-    use Auditable, HasFactory, SearchesColumns, SoftDeletes;
+    use Auditable, BelongsToLocation, HasFactory, SearchesColumns, SoftDeletes;
 
     protected $fillable = [
         'user_id', 'national_id', 'first_name', 'last_name', 'birth_date', 'gender',

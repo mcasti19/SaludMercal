@@ -96,6 +96,8 @@ export interface ApiUser {
   national_id?: string | null;
   department?: string | null;
   patient_id?: number | null;
+  location_id?: number | null;
+  location?: ApiCatalogItem | null;
   last_login_at?: string | null;
   created_at?: string | null;
 }

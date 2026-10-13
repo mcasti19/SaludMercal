@@ -228,6 +228,22 @@ class PatientSeeder extends Seeder
                 'contact' => 'Verónica Zambrano (Madre)',
                 'contact_phone' => '0412-8889900',
             ],
+            [
+                'national_id' => 'V-22334455',
+                'first_name' => 'Marcos Vinicio',
+                'last_name' => 'Urdaneta Pirela',
+                'birth_date' => '1995-10-12',
+                'gender' => Gender::Male,
+                'phone' => '0414-6123456',
+                'email' => 'marcos.urdaneta@mercal.gob.ve',
+                'department_id' => $logisticsDept?->id,
+                'location_id' => Location::where('code', 'MED-ZUL')->first()?->id ?? $centralLocation?->id,
+                'job_title' => 'Supervisor de Almacén Maracaibo',
+                'blood_type' => 'O+',
+                'allergies' => 'Ninguna',
+                'contact' => 'Doris Pirela (Madre)',
+                'contact_phone' => '0414-6001122',
+            ],
         ];
 
         foreach ($patientsList as $pData) {

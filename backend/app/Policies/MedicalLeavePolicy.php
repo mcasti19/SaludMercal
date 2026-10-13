@@ -27,12 +27,21 @@ class MedicalLeavePolicy
 
     public function review(User $user, MedicalLeave $leave): bool
     {
-        return $user->hasRole(UserRole::Admin, UserRole::Doctor);
+        if ($user->hasNationalScope()) {
+            return true;
+        }
+
+        return $user->hasRole(UserRole::Admin, UserRole::Doctor)
+            && (is_null($user->location_id) || $user->location_id === $leave->location_id);
     }
 
     public function delete(User $user, MedicalLeave $leave): bool
     {
-        if ($user->isAdmin()) {
+        if ($user->hasNationalScope()) {
+            return true;
+        }
+
+        if ($user->isAdmin() && (is_null($user->location_id) || $user->location_id === $leave->location_id)) {
             return true;
         }
 

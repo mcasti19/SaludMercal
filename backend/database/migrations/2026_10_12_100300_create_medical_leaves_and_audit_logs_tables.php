@@ -12,6 +12,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('patient_id')->constrained()->restrictOnDelete();
             $table->foreignId('doctor_id')->nullable()->constrained()->nullOnDelete();
+            $table->foreignId('location_id')->nullable()->constrained()->nullOnDelete();
             $table->string('type', 20);
             $table->date('start_date');
             $table->date('end_date');
@@ -27,6 +28,7 @@ return new class extends Migration
 
             $table->index(['patient_id', 'start_date']);
             $table->index(['status', 'start_date']);
+            $table->index(['location_id', 'start_date']);
         });
 
         Schema::create('audit_logs', function (Blueprint $table) {

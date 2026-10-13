@@ -18,7 +18,7 @@ class UserSeeder extends Seeder
         $centralLocation = \App\Models\Location::where('is_headquarters', true)->first();
         $centralLocationId = $centralLocation?->id;
 
-        // 1. Primary Administrator (Moises Castillo)
+        // 1. Primary National SuperAdmin (Moisés Castillo)
         $adminEmail = env('SEED_ADMIN_EMAIL', 'moicastillo@mercal.gob.ve');
         $adminUsername = env('SEED_ADMIN_USERNAME', 'moicastillo');
         $adminPassword = env('SEED_ADMIN_PASSWORD', $defaultPassword);
@@ -28,7 +28,7 @@ class UserSeeder extends Seeder
             [
                 'name' => 'Moisés Castillo',
                 'username' => $adminUsername,
-                'role' => UserRole::Admin,
+                'role' => UserRole::SuperAdmin,
                 'location_id' => $centralLocationId,
                 'is_active' => true,
                 'must_change_password' => false,
@@ -36,11 +36,11 @@ class UserSeeder extends Seeder
             ]
         );
 
-        // 2. Generic System Admin (admin@mercal.gob.ve / admin)
+        // 2. Sede Central Admin (admin@mercal.gob.ve / admin)
         User::updateOrCreate(
             ['username' => 'admin'],
             [
-                'name' => 'Administrador del Sistema',
+                'name' => 'Administrador Sede Central',
                 'email' => 'admin@mercal.gob.ve',
                 'role' => UserRole::Admin,
                 'location_id' => $centralLocationId,
@@ -77,5 +77,35 @@ class UserSeeder extends Seeder
                 'password' => $defaultPassword,
             ]
         );
+
+        // 5. Regional Staff (Zulia) for multi-sede segregation testing
+        $zuliaLocation = \App\Models\Location::where('code', 'MED-ZUL')->first();
+        if ($zuliaLocation) {
+            User::updateOrCreate(
+                ['username' => 'admin.zulia'],
+                [
+                    'name' => 'Coordinador Médico Zulia',
+                    'email' => 'admin.zulia@mercal.gob.ve',
+                    'role' => UserRole::Admin,
+                    'location_id' => $zuliaLocation->id,
+                    'is_active' => true,
+                    'must_change_password' => false,
+                    'password' => $defaultPassword,
+                ]
+            );
+
+            User::updateOrCreate(
+                ['username' => 'recepcion.zulia'],
+                [
+                    'name' => 'Recepción Sede Zulia',
+                    'email' => 'recepcion.zulia@mercal.gob.ve',
+                    'role' => UserRole::Receptionist,
+                    'location_id' => $zuliaLocation->id,
+                    'is_active' => true,
+                    'must_change_password' => false,
+                    'password' => $defaultPassword,
+                ]
+            );
+        }
     }
 }

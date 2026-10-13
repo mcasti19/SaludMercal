@@ -69,7 +69,17 @@ class User extends Authenticatable
 
     public function isAdmin(): bool
     {
-        return $this->role === UserRole::Admin;
+        return $this->hasRole(UserRole::Admin, UserRole::SuperAdmin);
+    }
+
+    public function isSuperAdmin(): bool
+    {
+        return $this->role === UserRole::SuperAdmin;
+    }
+
+    public function hasNationalScope(): bool
+    {
+        return $this->role === UserRole::SuperAdmin;
     }
 
     public function scopeSearch(Builder $query, ?string $term): Builder

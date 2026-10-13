@@ -13,7 +13,11 @@ class UserPolicy
 
     public function view(User $user, User $target): bool
     {
-        return $user->isAdmin();
+        if ($user->hasNationalScope()) {
+            return true;
+        }
+
+        return $user->isAdmin() && (is_null($user->location_id) || $user->location_id === $target->location_id);
     }
 
     public function create(User $user): bool
@@ -23,12 +27,24 @@ class UserPolicy
 
     public function update(User $user, User $target): bool
     {
-        return $user->isAdmin();
+        if ($user->hasNationalScope()) {
+            return true;
+        }
+
+        return $user->isAdmin() && (is_null($user->location_id) || $user->location_id === $target->location_id);
     }
 
     /** Administrators cannot delete their own account. */
     public function delete(User $user, User $target): bool
     {
-        return $user->isAdmin() && $user->isNot($target);
+        if ($user->is($target)) {
+            return false;
+        }
+
+        if ($user->hasNationalScope()) {
+            return true;
+        }
+
+        return $user->isAdmin() && (is_null($user->location_id) || $user->location_id === $target->location_id);
     }
 }

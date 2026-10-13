@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Concerns\Auditable;
+use App\Models\Concerns\BelongsToLocation;
 use App\Models\Concerns\SearchesColumns;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -14,7 +15,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Doctor extends Model
 {
-    use Auditable, HasFactory, SearchesColumns, SoftDeletes;
+    use Auditable, BelongsToLocation, HasFactory, SearchesColumns, SoftDeletes;
 
     protected $fillable = [
         'user_id', 'specialty_id', 'location_id', 'national_id', 'license_number',

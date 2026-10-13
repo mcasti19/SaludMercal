@@ -22,6 +22,8 @@ class UserResource extends JsonResource
             'national_id' => $this->patient?->national_id,
             'department' => $this->patient?->department?->name,
             'patient_id' => $this->patient?->id,
+            'location_id' => $this->location_id,
+            'location' => $this->location ? new CatalogResource($this->location) : null,
             'last_login_at' => $this->last_login_at?->toIso8601String(),
             'created_at' => $this->created_at?->toIso8601String(),
         ];
