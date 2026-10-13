@@ -115,6 +115,9 @@ export interface ApiCatalogItem {
   name: string;
   code?: string | null;
   description?: string | null;
+  state?: string | null;
+  phone?: string | null;
+  is_headquarters?: boolean | null;
   is_active?: boolean;
 }
 
@@ -140,6 +143,8 @@ export interface ApiPatient {
   emergency_contact_phone?: string | null;
   is_active: boolean;
   created_at?: string;
+  appointments?: ApiAppointment[];
+  medical_leaves?: ApiMedicalLeave[];
 }
 
 export interface ApiDoctorSchedule {
@@ -302,6 +307,11 @@ export async function apiGetPatients(params?: {
 
 export async function apiGetMyPatient(): Promise<ApiPatient> {
   const res = await apiFetch<{ data: ApiPatient }>("/v1/patients/me");
+  return res.data;
+}
+
+export async function apiGetPatient(id: number | string): Promise<ApiPatient> {
+  const res = await apiFetch<{ data: ApiPatient }>(`/v1/patients/${id}`);
   return res.data;
 }
 

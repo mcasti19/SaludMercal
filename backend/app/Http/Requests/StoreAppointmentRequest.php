@@ -18,6 +18,7 @@ class StoreAppointmentRequest extends FormRequest
         return [
             'patient_id' => ['nullable', 'integer', Rule::exists('patients', 'id')->whereNull('deleted_at')],
             'doctor_id' => ['required', 'integer', Rule::exists('doctors', 'id')->whereNull('deleted_at')],
+            'location_id' => ['nullable', 'integer', Rule::exists('locations', 'id')->where('is_active', true)],
             'scheduled_date' => ['required', 'date_format:Y-m-d', 'after_or_equal:today'],
             'start_time' => ['required', 'date_format:H:i'],
             'reason' => ['required', 'string', 'max:500'],

@@ -4,6 +4,7 @@ import { create } from "zustand";
 import { Paciente } from "@/types";
 import {
   apiGetPatients,
+  apiGetPatient,
   apiCreatePatient,
   apiUpdatePatient,
   apiDeletePatient,
@@ -11,6 +12,8 @@ import {
   ApiPatient,
   ApiCatalogItem,
 } from "@/lib/api";
+import { mapApiAppointment } from "@/modules/citas/citas.store";
+import { mapApiMedicalLeave } from "@/modules/reposos/reposos.store";
 
 export function mapApiPatient(p: ApiPatient): Paciente {
   return {
@@ -23,17 +26,34 @@ export function mapApiPatient(p: ApiPatient): Paciente {
     email: p.email ?? "",
     fechaNacimiento: p.birth_date,
     estado: p.is_active ? "ACTIVO" : "INACTIVO",
+    location: p.location ? {
+      id: String(p.location.id),
+      name: p.location.name,
+      state: p.location.state ?? undefined,
+      is_headquarters: Boolean(p.location.is_headquarters),
+    } : undefined,
+    sede: p.location?.name ?? (p.location_id ? `Sede #${p.location_id}` : undefined),
+    isHeadquarters: Boolean(p.location?.is_headquarters),
+    cargo: p.job_title ?? undefined,
+    grupoSanguineo: p.blood_type ?? undefined,
+    alergias: p.allergies ?? undefined,
+    contactoEmergenciaNombre: p.emergency_contact_name ?? undefined,
+    contactoEmergenciaTelefono: p.emergency_contact_phone ?? undefined,
+    appointments: p.appointments?.map(mapApiAppointment),
+    medical_leaves: p.medical_leaves?.map(mapApiMedicalLeave),
   };
 }
 
 interface PacientesState {
   pacientes: Paciente[];
+  currentPaciente: Paciente | null;
   departments: ApiCatalogItem[];
   isLoading: boolean;
   error: string | null;
   search: string;
   setSearch: (search: string) => void;
   fetchPacientes: (searchQuery?: string) => Promise<void>;
+  fetchPacienteById: (id: string) => Promise<Paciente | null>;
   fetchDepartments: () => Promise<void>;
   addPaciente: (data: Omit<Paciente, "id">) => Promise<boolean>;
   updatePaciente: (id: string, data: Partial<Paciente>) => Promise<boolean>;
@@ -42,6 +62,7 @@ interface PacientesState {
 
 export const usePacientesStore = create<PacientesState>()((set, get) => ({
   pacientes: [],
+  currentPaciente: null,
   departments: [],
   isLoading: false,
   error: null,
@@ -74,6 +95,20 @@ export const usePacientesStore = create<PacientesState>()((set, get) => ({
     } catch (err) {
       const message = err instanceof Error ? err.message : "Error al cargar pacientes";
       set({ isLoading: false, error: message });
+    }
+  },
+
+  fetchPacienteById: async (id: string) => {
+    set({ isLoading: true, error: null });
+    try {
+      const apiItem = await apiGetPatient(id);
+      const mapped = mapApiPatient(apiItem);
+      set({ currentPaciente: mapped, isLoading: false, error: null });
+      return mapped;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Error al cargar datos del paciente";
+      set({ isLoading: false, error: message, currentPaciente: null });
+      return null;
     }
   },
 

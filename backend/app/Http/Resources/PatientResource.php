@@ -26,6 +26,8 @@ class PatientResource extends JsonResource
             'location_id' => $this->location_id,
             'department' => new CatalogResource($this->whenLoaded('department')),
             'location' => new CatalogResource($this->whenLoaded('location')),
+            'appointments' => AppointmentResource::collection($this->whenLoaded('appointments')),
+            'medical_leaves' => MedicalLeaveResource::collection($this->whenLoaded('medicalLeaves')),
             'job_title' => $this->job_title,
             'blood_type' => $this->blood_type,
             'allergies' => $this->allergies,

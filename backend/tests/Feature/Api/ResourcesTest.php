@@ -161,4 +161,40 @@ class ResourcesTest extends TestCase
 
         $this->getJson('/api/v1/patients/999')->assertNotFound()->assertExactJson(['message' => 'Resource not found.']);
     }
+
+    public function test_patient_show_returns_appointments_and_medical_leaves_history(): void
+    {
+        $this->actingAsRole(UserRole::Receptionist);
+        $patient = Patient::factory()->create();
+
+        $response = $this->getJson("/api/v1/patients/{$patient->id}");
+        $response->assertOk()
+            ->assertJsonStructure([
+                'data' => [
+                    'id',
+                    'national_id',
+                    'first_name',
+                    'last_name',
+                    'appointments',
+                    'medical_leaves',
+                ],
+            ]);
+    }
+
+    public function test_locations_catalog_supports_national_states_and_headquarters(): void
+    {
+        $this->actingAsRole(UserRole::Admin);
+
+        $response = $this->postJson('/api/v1/locations', [
+            'name' => 'Sede Central Mercal',
+            'code' => 'HQ-TEST',
+            'state' => 'Distrito Capital',
+            'is_headquarters' => true,
+            'phone' => '0212-1234567',
+        ]);
+
+        $response->assertCreated()
+            ->assertJsonPath('data.is_headquarters', true)
+            ->assertJsonPath('data.state', 'Distrito Capital');
+    }
 }

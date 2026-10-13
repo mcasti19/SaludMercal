@@ -14,9 +14,11 @@ interface NuevaCitaModalProps {
   onClose: () => void;
   pacientes: Paciente[];
   medicos: Medico[];
+  defaultPacienteId?: string;
+  onSuccess?: () => void;
 }
 
-export function NuevaCitaModal({ onClose, pacientes, medicos }: NuevaCitaModalProps) {
+export function NuevaCitaModal({ onClose, pacientes, medicos, defaultPacienteId, onSuccess }: NuevaCitaModalProps) {
   const { addCita } = useCitasStore();
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [availableSlots, setAvailableSlots] = useState<string[]>(HORAS_DISPONIBLES);
@@ -31,6 +33,7 @@ export function NuevaCitaModal({ onClose, pacientes, medicos }: NuevaCitaModalPr
   } = useForm<CitaFormValues>({
     resolver: zodResolver(citaSchema),
     defaultValues: {
+      pacienteId: defaultPacienteId ?? "",
       fecha: getTodayLocalString(),
       estado: "PENDIENTE",
     },
@@ -93,6 +96,7 @@ export function NuevaCitaModal({ onClose, pacientes, medicos }: NuevaCitaModalPr
     });
 
     if (ok) {
+      onSuccess?.();
       onClose();
     } else {
       setSubmitError(

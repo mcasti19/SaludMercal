@@ -10,11 +10,23 @@ class Location extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'code', 'state', 'city', 'address', 'is_active'];
+    protected $fillable = [
+        'name',
+        'code',
+        'state',
+        'city',
+        'address',
+        'phone',
+        'is_headquarters',
+        'is_active',
+    ];
 
     protected function casts(): array
     {
-        return ['is_active' => 'boolean'];
+        return [
+            'is_headquarters' => 'boolean',
+            'is_active' => 'boolean',
+        ];
     }
 
     public function patients(): HasMany
@@ -25,5 +37,15 @@ class Location extends Model
     public function doctors(): HasMany
     {
         return $this->hasMany(Doctor::class);
+    }
+
+    public function appointments(): HasMany
+    {
+        return $this->hasMany(Appointment::class);
+    }
+
+    public function users(): HasMany
+    {
+        return $this->hasMany(User::class);
     }
 }

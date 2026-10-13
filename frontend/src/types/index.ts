@@ -29,6 +29,21 @@ export interface Paciente {
   email: string;
   fechaNacimiento: string; // ISO date string
   estado: "ACTIVO" | "INACTIVO";
+  location?: {
+    id: string;
+    name: string;
+    state?: string;
+    is_headquarters?: boolean;
+  };
+  sede?: string;
+  isHeadquarters?: boolean;
+  cargo?: string;
+  grupoSanguineo?: string;
+  alergias?: string;
+  contactoEmergenciaNombre?: string;
+  contactoEmergenciaTelefono?: string;
+  appointments?: Cita[];
+  medical_leaves?: Reposo[];
 }
 
 // Especialidad

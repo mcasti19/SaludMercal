@@ -24,6 +24,7 @@ class User extends Authenticatable
         'username',
         'email',
         'role',
+        'location_id',
         'is_active',
         'must_change_password',
         'password',
@@ -54,6 +55,11 @@ class User extends Authenticatable
     public function doctor(): HasOne
     {
         return $this->hasOne(Doctor::class);
+    }
+
+    public function location(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Location::class);
     }
 
     public function hasRole(UserRole ...$roles): bool

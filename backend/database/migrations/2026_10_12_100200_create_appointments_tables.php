@@ -15,6 +15,7 @@ return new class extends Migration
             $table->foreignId('patient_id')->constrained()->restrictOnDelete();
             $table->foreignId('doctor_id')->constrained()->restrictOnDelete();
             $table->foreignId('specialty_id')->constrained()->restrictOnDelete();
+            $table->foreignId('location_id')->nullable()->constrained()->nullOnDelete();
             $table->date('scheduled_date');
             $table->time('start_time');
             $table->time('end_time');
@@ -33,6 +34,7 @@ return new class extends Migration
 
             $table->index(['doctor_id', 'scheduled_date']);
             $table->index(['patient_id', 'scheduled_date']);
+            $table->index(['location_id', 'scheduled_date']);
             $table->index(['scheduled_date', 'status']);
         });
 

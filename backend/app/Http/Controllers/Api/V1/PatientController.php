@@ -34,7 +34,18 @@ class PatientController extends Controller
     {
         $this->authorize('view', $patient);
 
-        return new PatientResource($patient->load(['department', 'location']));
+        return new PatientResource(
+            $patient->load([
+                'department',
+                'location',
+                'appointments' => fn ($q) => $q->orderByDesc('scheduled_date')->orderByDesc('start_time'),
+                'appointments.doctor.specialty',
+                'appointments.location',
+                'medicalLeaves' => fn ($q) => $q->orderByDesc('start_date'),
+                'medicalLeaves.doctor',
+                'medicalLeaves.reviewer',
+            ])
+        );
     }
 
     /** The patient record linked to the authenticated user (employee portal). */
