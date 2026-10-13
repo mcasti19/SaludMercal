@@ -335,7 +335,9 @@ export function UsuariosContent() {
             className="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-700 dark:text-slate-300 text-sm focus:outline-hidden focus:ring-2 focus:ring-blue-500/30"
           >
             <option value="">Todos los Roles</option>
-            <option value="super_admin">Super Administrador</option>
+            {isSuperAdmin && (
+              <option value="super_admin">Super Administrador</option>
+            )}
             <option value="logical_security">Seguridad Lógica (OTIC)</option>
             <option value="admin">Administrador de Sede</option>
             <option value="receptionist">Recepción</option>

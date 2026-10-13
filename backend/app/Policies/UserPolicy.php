@@ -17,6 +17,11 @@ class UserPolicy
             return false;
         }
 
+        // Only the SuperAdmin can view their own SuperAdmin account; nobody else can view SuperAdmins.
+        if ($target->isSuperAdmin()) {
+            return $user->is($target);
+        }
+
         if ($user->hasNationalUserScope()) {
             return true;
         }
@@ -35,8 +40,8 @@ class UserPolicy
             return false;
         }
 
-        // Only SuperAdmin can modify SuperAdmin accounts
-        if ($target->isSuperAdmin() && ! $user->isSuperAdmin()) {
+        // Only SuperAdmin can modify SuperAdmin accounts, and only their own account
+        if ($target->isSuperAdmin() && ! $user->is($target)) {
             return false;
         }
 

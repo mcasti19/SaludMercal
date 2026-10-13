@@ -114,4 +114,27 @@ class User extends Authenticatable
     {
         return $query->searchColumns($term, ['name', 'username', 'email']);
     }
+
+    /**
+     * Scope users visible in management listings to a given viewer.
+     *
+     * Rules:
+     * - Nobody except SuperAdmin can see SuperAdmin users.
+     * - A SuperAdmin can ONLY see themselves among SuperAdmin accounts.
+     *
+     * @param Builder<User> $query
+     * @param User $viewer
+     * @return Builder<User>
+     */
+    public function scopeVisibleTo(Builder $query, User $viewer): Builder
+    {
+        if ($viewer->isSuperAdmin()) {
+            return $query->where(function (Builder $q) use ($viewer) {
+                $q->where('role', '!=', UserRole::SuperAdmin)
+                    ->orWhere('id', $viewer->id);
+            });
+        }
+
+        return $query->where('role', '!=', UserRole::SuperAdmin);
+    }
 }

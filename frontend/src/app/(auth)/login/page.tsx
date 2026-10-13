@@ -20,7 +20,15 @@ import { useForm } from "react-hook-form";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login, isLoading, error, clearError, isAuthenticated, user, isHydrated } = useAuthStore();
+  const {
+    login,
+    isLoading,
+    error,
+    clearError,
+    isAuthenticated,
+    user,
+    isHydrated,
+  } = useAuthStore();
   const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
@@ -73,15 +81,22 @@ export default function LoginPage() {
         {/* Contenido */}
         <div className="relative z-10 flex flex-col justify-between h-full p-10 xl:p-14">
           {/* Parte superior: Logo */}
-          <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-11 h-11 rounded-xl bg-white/15 backdrop-blur-sm border border-white/20 shadow-lg">
-              <HeartPulse className="w-6 h-6 text-cyan-300" />
+          <div className="flex flex-col gap-3.5">
+            <div className="relative w-40 h-40 shrink-0 drop-shadow-md transition-transform duration-200 hover:scale-105">
+              <Image
+                src="/logoMercalSalud.png"
+                alt="Logo SaludMercal"
+                width={150}
+                height={150}
+                priority
+                className="w-full h-full object-contain"
+              />
             </div>
             <div>
-              <span className="text-white font-bold text-lg tracking-tight leading-none">
+              <span className="text-white font-bold text-3xl tracking-tight leading-none block">
                 SaludMercal
               </span>
-              <p className="text-blue-200/70 text-xs leading-none mt-0.5">
+              <p className="text-blue-200/75 text-xl font-medium leading-none mt-1">
                 Sistema de Gestión de Salud
               </p>
             </div>
@@ -163,15 +178,24 @@ export default function LoginPage() {
 
         <div className="relative z-10 w-full max-w-md px-6 sm:px-8 py-10">
           {/* Logo solo en móvil */}
-          <div className="flex lg:hidden items-center justify-center gap-3 mb-10">
-            <div className="flex items-center justify-center w-11 h-11 rounded-2xl bg-linear-to-tr from-blue-600 to-cyan-400 shadow-lg shadow-cyan-500/20 ring-1 ring-white/20">
-              <HeartPulse className="w-6 h-6 text-white" />
+          <div className="flex flex-col lg:hidden items-center justify-center gap-3.5 mb-8">
+            <div className="relative w-30 h-30 shrink-0 drop-shadow-md transition-transform duration-200 hover:scale-105">
+              <Image
+                src="/logoMercalSalud.png"
+                alt="Logo SaludMercal"
+                width={100}
+                height={100}
+                priority
+                className="w-full h-full object-contain"
+              />
             </div>
-            <div>
-              <span className="text-white font-bold text-xl tracking-tight block">
+            <div className="text-center">
+              <span className="text-white font-bold text-3xl tracking-tight block">
                 SaludMercal
               </span>
-              <p className="text-xs text-slate-400">Gestión de Salud</p>
+              <p className="text-xs text-slate-400 mt-0.5">
+                Sistema de Gestión de Salud
+              </p>
             </div>
           </div>
 
@@ -180,9 +204,9 @@ export default function LoginPage() {
             <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
               Iniciar Sesión
             </h2>
-            <p className="text-slate-400 text-sm mt-1.5 leading-relaxed">
+            {/* <p className="text-slate-400 text-sm mt-1.5 leading-relaxed">
               Ingresa tus credenciales para acceder al portal
-            </p>
+            </p> */}
           </div>
 
           <form

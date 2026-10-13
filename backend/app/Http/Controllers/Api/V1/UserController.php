@@ -28,6 +28,7 @@ class UserController extends Controller
 
         $users = User::query()
             ->with(['location', 'patient.department'])
+            ->visibleTo($currentUser)
             ->search($request->query('search'))
             ->when($request->filled('role'), fn ($q) => $q->where('role', $request->string('role')))
             ->when($request->has('is_active'), fn ($q) => $q->where('is_active', $request->boolean('is_active')))
