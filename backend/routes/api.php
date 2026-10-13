@@ -27,6 +27,7 @@ Route::prefix('v1')->group(function () {
         // Everything below requires the account not to be flagged for a password change.
         Route::middleware('password.changed')->group(function () {
 
+            Route::post('users/{user}/reset-password', [UserController::class, 'resetPassword']);
             Route::apiResource('users', UserController::class);
             Route::get('audit-logs', [AuditLogController::class, 'index']);
 

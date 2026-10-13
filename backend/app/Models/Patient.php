@@ -71,6 +71,10 @@ class Patient extends Model
     /** Patients a given user is allowed to see. */
     public function scopeVisibleTo(Builder $query, User $user): Builder
     {
+        if ($user->isLogicalSecurity()) {
+            return $query->whereRaw('1 = 0');
+        }
+
         return $user->role->isStaff() ? $query : $query->where('user_id', $user->id);
     }
 }

@@ -43,8 +43,17 @@ class AuthController extends Controller
             'last_login_ip' => $request->ip(),
         ])->saveQuietly();
 
+        if ($user->isPasswordExpired() && ! $user->must_change_password) {
+            $user->forceFill(['must_change_password' => true])->saveQuietly();
+        }
+
         $user->tokens()->where('name', 'spa-token')->delete();
-        $token = $user->createToken('spa-token', [$user->role->value]);
+        $tokenTimeout = $user->session_timeout_minutes ?: 30;
+        $token = $user->createToken(
+            'spa-token',
+            [$user->role->value],
+            now()->addMinutes($tokenTimeout)
+        );
 
         $user->loadMissing(['patient.department', 'location']);
 
@@ -76,10 +85,13 @@ class AuthController extends Controller
     public function changePassword(ChangePasswordRequest $request): JsonResponse
     {
         $user = $request->user();
+        $expirationMonths = $user->password_expiration_months ?: 3;
 
         $user->forceFill([
             'password' => $request->string('password')->toString(),
             'must_change_password' => false,
+            'password_changed_at' => now(),
+            'password_expires_at' => now()->addMonths($expirationMonths),
         ])->save();
 
         $user->tokens()->where('id', '!=', $user->currentAccessToken()->id)->delete();

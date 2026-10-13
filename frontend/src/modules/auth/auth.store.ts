@@ -6,34 +6,37 @@ import { AuthUser } from "@/types";
 import { apiLogin, apiLogout, apiMe, setAuthToken, getAuthToken, ApiUser } from "@/lib/api";
 
 /** Roles con acceso al panel de administración */
-export const ADMIN_ROLES = ["SUPERADMIN", "ADMIN", "RECEPCION", "MEDICO", "ENFERMERIA"] as const;
+export const ADMIN_ROLES = ["SUPERADMIN", "SEGURIDAD_LOGICA", "ADMIN", "RECEPCION", "MEDICO", "ENFERMERIA"] as const;
 
 /** Retorna la ruta de inicio según el rol del usuario */
 export function getRedirectPath(role: AuthUser["role"]): string {
+  if (role === "SEGURIDAD_LOGICA") return "/usuarios";
   return (ADMIN_ROLES as readonly string[]).includes(role) ? "/" : "/portal";
 }
 
 /** Mapea el rol a una etiqueta legible */
 function toRoleLabel(role: string): string {
   const labels: Record<string, string> = {
-    SUPERADMIN: "Super Administrador",
-    ADMIN:      "Administrador de Sede",
-    RECEPCION:  "Recepción",
-    MEDICO:     "Médico",
-    ENFERMERIA: "Enfermería",
-    EMPLEADO:   "Empleado",
+    SUPERADMIN:       "Super Administrador",
+    SEGURIDAD_LOGICA: "Seguridad Lógica (OTIC)",
+    ADMIN:            "Administrador de Sede",
+    RECEPCION:        "Recepción",
+    MEDICO:           "Médico",
+    ENFERMERIA:       "Enfermería",
+    EMPLEADO:         "Empleado",
   };
   return labels[role] ?? role;
 }
 
 /** API role (backend enum value) → UI role identifier */
 const API_ROLE_MAP: Record<string, AuthUser["role"]> = {
-  super_admin:  "SUPERADMIN",
-  admin:        "ADMIN",
-  receptionist: "RECEPCION",
-  doctor:       "MEDICO",
-  nurse:        "ENFERMERIA",
-  employee:     "EMPLEADO",
+  super_admin:      "SUPERADMIN",
+  logical_security: "SEGURIDAD_LOGICA",
+  admin:            "ADMIN",
+  receptionist:     "RECEPCION",
+  doctor:           "MEDICO",
+  nurse:            "ENFERMERIA",
+  employee:         "EMPLEADO",
 };
 
 function mapApiUser(apiUser: ApiUser): AuthUser {

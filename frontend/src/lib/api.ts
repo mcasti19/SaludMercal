@@ -93,6 +93,10 @@ export interface ApiUser {
   role: string;
   is_active: boolean;
   must_change_password: boolean;
+  password_expiration_months?: number;
+  password_expires_at?: string | null;
+  is_password_expired?: boolean;
+  session_timeout_minutes?: number;
   national_id?: string | null;
   department?: string | null;
   patient_id?: number | null;
@@ -656,4 +660,80 @@ export function downloadBlobAsFile(blob: Blob, filename: string): void {
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
+}
+
+// ─── Users & IAM Management ──────────────────────────────────────────────────
+
+export interface CreateUserData {
+  name: string;
+  username: string;
+  email: string;
+  role: string;
+  location_id?: number | null;
+  password?: string;
+  is_active?: boolean;
+  must_change_password?: boolean;
+  password_expiration_months?: 3 | 6 | 12;
+  session_timeout_minutes?: 5 | 20 | 30 | 60;
+}
+
+export interface UpdateUserData {
+  name?: string;
+  username?: string;
+  email?: string;
+  role?: string;
+  location_id?: number | null;
+  password?: string;
+  is_active?: boolean;
+  must_change_password?: boolean;
+  password_expiration_months?: 3 | 6 | 12;
+  session_timeout_minutes?: 5 | 20 | 30 | 60;
+}
+
+export async function apiGetUsers(params?: {
+  search?: string;
+  role?: string;
+  location_id?: number;
+  is_active?: boolean;
+}): Promise<ApiUser[]> {
+  const query = new URLSearchParams();
+  query.set("per_page", "100");
+  if (params?.search) query.set("search", params.search);
+  if (params?.role) query.set("role", params.role);
+  if (params?.location_id) query.set("location_id", String(params.location_id));
+  if (params?.is_active !== undefined) query.set("is_active", params.is_active ? "1" : "0");
+
+  const res = await apiFetch<{ data: ApiUser[] }>(`/v1/users?${query.toString()}`);
+  return res.data;
+}
+
+export async function apiGetUser(id: number): Promise<{ data: ApiUser }> {
+  return apiFetch<{ data: ApiUser }>(`/v1/users/${id}`);
+}
+
+export async function apiCreateUser(data: CreateUserData): Promise<{ data: ApiUser }> {
+  return apiFetch<{ data: ApiUser }>("/v1/users", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function apiUpdateUser(id: number, data: UpdateUserData): Promise<{ data: ApiUser }> {
+  return apiFetch<{ data: ApiUser }>(`/v1/users/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function apiDeleteUser(id: number): Promise<void> {
+  return apiFetch<void>(`/v1/users/${id}`, {
+    method: "DELETE",
+  });
+}
+
+export async function apiResetUserPassword(id: number, password: string): Promise<{ message: string }> {
+  return apiFetch<{ message: string }>(`/v1/users/${id}/reset-password`, {
+    method: "POST",
+    body: JSON.stringify({ password }),
+  });
 }

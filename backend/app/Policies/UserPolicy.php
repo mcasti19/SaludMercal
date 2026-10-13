@@ -8,43 +8,78 @@ class UserPolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->isAdmin();
+        return $user->canManageUsers();
     }
 
     public function view(User $user, User $target): bool
     {
-        if ($user->hasNationalScope()) {
+        if (! $user->canManageUsers()) {
+            return false;
+        }
+
+        if ($user->hasNationalUserScope()) {
             return true;
         }
 
-        return $user->isAdmin() && (is_null($user->location_id) || $user->location_id === $target->location_id);
+        return is_null($user->location_id) || $user->location_id === $target->location_id;
     }
 
     public function create(User $user): bool
     {
-        return $user->isAdmin();
+        return $user->canManageUsers();
     }
 
     public function update(User $user, User $target): bool
     {
-        if ($user->hasNationalScope()) {
+        if (! $user->canManageUsers()) {
+            return false;
+        }
+
+        // Only SuperAdmin can modify SuperAdmin accounts
+        if ($target->isSuperAdmin() && ! $user->isSuperAdmin()) {
+            return false;
+        }
+
+        // Only SuperAdmin or LogicalSecurity can modify LogicalSecurity accounts
+        if ($target->isLogicalSecurity() && ! ($user->isSuperAdmin() || $user->isLogicalSecurity())) {
+            return false;
+        }
+
+        if ($user->hasNationalUserScope()) {
             return true;
         }
 
-        return $user->isAdmin() && (is_null($user->location_id) || $user->location_id === $target->location_id);
+        return is_null($user->location_id) || $user->location_id === $target->location_id;
     }
 
-    /** Administrators cannot delete their own account. */
+    /** Administrators cannot delete their own account or SuperAdmin accounts. */
     public function delete(User $user, User $target): bool
     {
         if ($user->is($target)) {
             return false;
         }
 
-        if ($user->hasNationalScope()) {
+        if (! $user->canManageUsers()) {
+            return false;
+        }
+
+        if ($target->isSuperAdmin()) {
+            return false;
+        }
+
+        if ($target->isLogicalSecurity() && ! $user->isSuperAdmin()) {
+            return false;
+        }
+
+        if ($user->hasNationalUserScope()) {
             return true;
         }
 
-        return $user->isAdmin() && (is_null($user->location_id) || $user->location_id === $target->location_id);
+        return is_null($user->location_id) || $user->location_id === $target->location_id;
+    }
+
+    public function resetPassword(User $user, User $target): bool
+    {
+        return $this->update($user, $target);
     }
 }

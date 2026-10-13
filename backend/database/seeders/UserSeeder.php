@@ -32,11 +32,33 @@ class UserSeeder extends Seeder
                 'location_id' => $centralLocationId,
                 'is_active' => true,
                 'must_change_password' => false,
+                'password_expiration_months' => 6,
+                'session_timeout_minutes' => 60,
+                'password_changed_at' => now(),
+                'password_expires_at' => now()->addMonths(6),
                 'password' => $adminPassword,
             ]
         );
 
-        // 2. Sede Central Admin (admin@mercal.gob.ve / admin)
+        // 2. Seguridad Lógica (División de Seguridad Lógica - OTIC / Presidencia)
+        User::updateOrCreate(
+            ['username' => 'seguridad.logica'],
+            [
+                'name' => 'Seguridad Lógica (OTIC)',
+                'email' => 'seguridad.logica@mercal.gob.ve',
+                'role' => UserRole::LogicalSecurity,
+                'location_id' => $centralLocationId,
+                'is_active' => true,
+                'must_change_password' => false,
+                'password_expiration_months' => 3,
+                'session_timeout_minutes' => 20,
+                'password_changed_at' => now(),
+                'password_expires_at' => now()->addMonths(3),
+                'password' => $defaultPassword,
+            ]
+        );
+
+        // 3. Sede Central Admin (admin@mercal.gob.ve / admin)
         User::updateOrCreate(
             ['username' => 'admin'],
             [
@@ -46,11 +68,15 @@ class UserSeeder extends Seeder
                 'location_id' => $centralLocationId,
                 'is_active' => true,
                 'must_change_password' => false,
+                'password_expiration_months' => 3,
+                'session_timeout_minutes' => 30,
+                'password_changed_at' => now(),
+                'password_expires_at' => now()->addMonths(3),
                 'password' => $defaultPassword,
             ]
         );
 
-        // 3. Receptionist (recepcion@mercal.gob.ve / recepcion)
+        // 4. Receptionist (recepcion@mercal.gob.ve / recepcion)
         User::updateOrCreate(
             ['username' => 'recepcion'],
             [
@@ -60,11 +86,15 @@ class UserSeeder extends Seeder
                 'location_id' => $centralLocationId,
                 'is_active' => true,
                 'must_change_password' => false,
+                'password_expiration_months' => 3,
+                'session_timeout_minutes' => 30,
+                'password_changed_at' => now(),
+                'password_expires_at' => now()->addMonths(3),
                 'password' => $defaultPassword,
             ]
         );
 
-        // 4. Nurse (enfermeria@mercal.gob.ve / enfermeria)
+        // 5. Nurse (enfermeria@mercal.gob.ve / enfermeria)
         User::updateOrCreate(
             ['username' => 'enfermeria'],
             [
@@ -74,11 +104,15 @@ class UserSeeder extends Seeder
                 'location_id' => $centralLocationId,
                 'is_active' => true,
                 'must_change_password' => false,
+                'password_expiration_months' => 3,
+                'session_timeout_minutes' => 30,
+                'password_changed_at' => now(),
+                'password_expires_at' => now()->addMonths(3),
                 'password' => $defaultPassword,
             ]
         );
 
-        // 5. Regional Staff (Zulia) for multi-sede segregation testing
+        // 6. Regional Staff (Zulia) for multi-sede segregation testing
         $zuliaLocation = \App\Models\Location::where('code', 'MED-ZUL')->first();
         if ($zuliaLocation) {
             User::updateOrCreate(
@@ -90,6 +124,10 @@ class UserSeeder extends Seeder
                     'location_id' => $zuliaLocation->id,
                     'is_active' => true,
                     'must_change_password' => false,
+                    'password_expiration_months' => 3,
+                    'session_timeout_minutes' => 30,
+                    'password_changed_at' => now(),
+                    'password_expires_at' => now()->addMonths(3),
                     'password' => $defaultPassword,
                 ]
             );
@@ -103,6 +141,10 @@ class UserSeeder extends Seeder
                     'location_id' => $zuliaLocation->id,
                     'is_active' => true,
                     'must_change_password' => false,
+                    'password_expiration_months' => 3,
+                    'session_timeout_minutes' => 30,
+                    'password_changed_at' => now(),
+                    'password_expires_at' => now()->addMonths(3),
                     'password' => $defaultPassword,
                 ]
             );

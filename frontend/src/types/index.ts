@@ -4,7 +4,33 @@
 // ============================================================
 
 // Auth / Session
-export type UserRole = "SUPERADMIN" | "ADMIN" | "RECEPCION" | "MEDICO" | "ENFERMERIA" | "EMPLEADO";
+export type UserRole = "SUPERADMIN" | "SEGURIDAD_LOGICA" | "ADMIN" | "RECEPCION" | "MEDICO" | "ENFERMERIA" | "EMPLEADO";
+
+export interface SystemUser {
+  id: number;
+  name: string;
+  username: string;
+  email: string;
+  role: string;
+  is_active: boolean;
+  must_change_password: boolean;
+  password_expiration_months?: number;
+  password_expires_at?: string | null;
+  is_password_expired?: boolean;
+  session_timeout_minutes?: number;
+  national_id?: string | null;
+  department?: string | null;
+  patient_id?: number | null;
+  location_id?: number | null;
+  location?: {
+    id: number;
+    name: string;
+    state?: string | null;
+    is_headquarters?: boolean | null;
+  } | null;
+  last_login_at?: string | null;
+  created_at?: string | null;
+}
 
 export interface AuthUser {
   id: string;

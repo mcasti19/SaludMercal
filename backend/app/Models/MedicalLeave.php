@@ -52,6 +52,10 @@ class MedicalLeave extends Model
     /** Leaves a given user is allowed to see. */
     public function scopeVisibleTo(Builder $query, User $user): Builder
     {
+        if ($user->isLogicalSecurity()) {
+            return $query->whereRaw('1 = 0');
+        }
+
         if ($user->hasRole(UserRole::Employee)) {
             return $query->whereHas('patient', fn (Builder $q) => $q->where('user_id', $user->id));
         }

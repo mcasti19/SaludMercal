@@ -76,6 +76,10 @@ class Appointment extends Model
     /** Appointments a given user is allowed to see. */
     public function scopeVisibleTo(Builder $query, User $user): Builder
     {
+        if ($user->isLogicalSecurity()) {
+            return $query->whereRaw('1 = 0');
+        }
+
         if ($user->isAdmin() || $user->hasRole(UserRole::Receptionist, UserRole::Nurse)) {
             return $query;
         }

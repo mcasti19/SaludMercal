@@ -27,6 +27,10 @@ class User extends Authenticatable
         'location_id',
         'is_active',
         'must_change_password',
+        'password_expiration_months',
+        'password_changed_at',
+        'password_expires_at',
+        'session_timeout_minutes',
         'password',
     ];
 
@@ -41,6 +45,10 @@ class User extends Authenticatable
             'role' => UserRole::class,
             'is_active' => 'boolean',
             'must_change_password' => 'boolean',
+            'password_expiration_months' => 'integer',
+            'password_changed_at' => 'datetime',
+            'password_expires_at' => 'datetime',
+            'session_timeout_minutes' => 'integer',
             'email_verified_at' => 'datetime',
             'last_login_at' => 'datetime',
             'password' => 'hashed',
@@ -77,9 +85,29 @@ class User extends Authenticatable
         return $this->role === UserRole::SuperAdmin;
     }
 
+    public function isLogicalSecurity(): bool
+    {
+        return $this->role === UserRole::LogicalSecurity;
+    }
+
+    public function canManageUsers(): bool
+    {
+        return $this->role->canManageUsers();
+    }
+
     public function hasNationalScope(): bool
     {
         return $this->role === UserRole::SuperAdmin;
+    }
+
+    public function hasNationalUserScope(): bool
+    {
+        return $this->role->hasNationalUserScope();
+    }
+
+    public function isPasswordExpired(): bool
+    {
+        return $this->password_expires_at !== null && now()->isAfter($this->password_expires_at);
     }
 
     public function scopeSearch(Builder $query, ?string $term): Builder

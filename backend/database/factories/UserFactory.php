@@ -23,6 +23,10 @@ class UserFactory extends Factory
             'role' => UserRole::Employee,
             'is_active' => true,
             'must_change_password' => false,
+            'password_expiration_months' => 3,
+            'password_changed_at' => now(),
+            'password_expires_at' => now()->addMonths(3),
+            'session_timeout_minutes' => 30,
             'email_verified_at' => now(),
             'password' => static::$password ??= 'Password123*',
             'remember_token' => Str::random(10),
@@ -37,6 +41,11 @@ class UserFactory extends Factory
     public function admin(): static
     {
         return $this->role(UserRole::Admin);
+    }
+
+    public function logicalSecurity(): static
+    {
+        return $this->role(UserRole::LogicalSecurity);
     }
 
     public function inactive(): static

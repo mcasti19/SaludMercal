@@ -31,6 +31,10 @@ describe("Auth Store & Redirection (src/modules/auth/auth.store.ts)", () => {
       expect(getRedirectPath("ENFERMERIA")).toBe("/");
     });
 
+    it("redirects Seguridad Lógica strictly to user management ('/usuarios')", () => {
+      expect(getRedirectPath("SEGURIDAD_LOGICA")).toBe("/usuarios");
+    });
+
     it("redirects employees to self-service portal ('/portal')", () => {
       expect(getRedirectPath("EMPLEADO")).toBe("/portal");
     });

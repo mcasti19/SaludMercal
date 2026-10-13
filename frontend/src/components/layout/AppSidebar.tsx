@@ -20,57 +20,83 @@ import {
   Cross,
   FileBox,
   LayoutDashboard,
+  ShieldCheck,
   Stethoscope,
   Users,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-
-const NAV_ITEMS = [
-  {
-    href: "/",
-    label: "Dashboard",
-    icon: LayoutDashboard,
-    exact: true,
-  },
-  {
-    href: "/citas",
-    label: "Citas Médicas",
-    icon: CalendarClock,
-    exact: false,
-  },
-  {
-    href: "/pacientes",
-    label: "Pacientes",
-    icon: Users,
-    exact: false,
-  },
-  {
-    href: "/medicos",
-    label: "Médicos",
-    icon: Stethoscope,
-    exact: false,
-  },
-  {
-    href: "/reportes",
-    label: "Reportes",
-    icon: BarChart3,
-    exact: false,
-  },
-  {
-    href: "/reposos",
-    label: "Reposos",
-    icon: FileBox,
-    exact: false,
-  },
-];
+import { useAuthStore } from "@/modules/auth/auth.store";
 
 export function AppSidebar() {
   const pathname = usePathname();
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
+  const user = useAuthStore((s) => s.user);
 
-  const isActive = (item: (typeof NAV_ITEMS)[0]) => {
+  // Seguridad Lógica strictly manages access, users, and security (no clinical data)
+  const isSecurityRole = user?.role === "SEGURIDAD_LOGICA";
+  const canManageUsers = user?.role === "SUPERADMIN" || user?.role === "ADMIN" || isSecurityRole;
+
+  const navItems = isSecurityRole
+    ? [
+        {
+          href: "/usuarios",
+          label: "Gestión de Usuarios",
+          icon: ShieldCheck,
+          exact: false,
+        },
+      ]
+    : [
+        {
+          href: "/",
+          label: "Dashboard",
+          icon: LayoutDashboard,
+          exact: true,
+        },
+        {
+          href: "/citas",
+          label: "Citas Médicas",
+          icon: CalendarClock,
+          exact: false,
+        },
+        {
+          href: "/pacientes",
+          label: "Pacientes",
+          icon: Users,
+          exact: false,
+        },
+        {
+          href: "/medicos",
+          label: "Médicos",
+          icon: Stethoscope,
+          exact: false,
+        },
+        ...(canManageUsers
+          ? [
+              {
+                href: "/usuarios",
+                label: "Usuarios y Accesos",
+                icon: ShieldCheck,
+                exact: false,
+              },
+            ]
+          : []),
+        {
+          href: "/reportes",
+          label: "Reportes",
+          icon: BarChart3,
+          exact: false,
+        },
+        {
+          href: "/reposos",
+          label: "Reposos",
+          icon: FileBox,
+          exact: false,
+        },
+      ];
+
+  const isActive = (item: (typeof navItems)[0]) => {
     if (item.exact) return pathname === item.href;
     return pathname === item.href || pathname.startsWith(item.href + "/");
   };
@@ -105,7 +131,7 @@ export function AppSidebar() {
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {NAV_ITEMS.map((item) => {
+              {navItems.map((item) => {
                 const Icon = item.icon;
                 const active = isActive(item);
 

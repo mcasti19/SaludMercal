@@ -13,6 +13,10 @@ class AppointmentPolicy
 {
     public function viewAny(User $user): bool
     {
+        if ($user->isLogicalSecurity()) {
+            return false;
+        }
+
         return true; // results are always narrowed with Appointment::visibleTo()
     }
 

@@ -16,9 +16,13 @@ return new class extends Migration
             $table->string('name');
             $table->string('username')->unique();
             $table->string('email')->unique();
-            $table->string('role', 20)->default('employee')->index(); // App\Enums\UserRole
+            $table->string('role', 30)->default('employee')->index(); // App\Enums\UserRole
             $table->boolean('is_active')->default(true);
             $table->boolean('must_change_password')->default(false);
+            $table->unsignedSmallInteger('password_expiration_months')->default(3); // 3, 6, 12 months
+            $table->timestamp('password_changed_at')->nullable();
+            $table->timestamp('password_expires_at')->nullable();
+            $table->unsignedSmallInteger('session_timeout_minutes')->default(30); // 5, 20, 30, 60 minutes
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->timestamp('last_login_at')->nullable();
