@@ -8,6 +8,8 @@ import {
   Filter,
   RefreshCw,
   AlertCircle,
+  Download,
+  Loader2,
 } from "lucide-react";
 import { useCitasStore } from "@/modules/citas/citas.store";
 import { usePacientesStore } from "@/modules/pacientes/pacientes.store";
@@ -18,6 +20,7 @@ import { formatDate, formatTime } from "@/lib/utils";
 import { CITA_ESTADO_CONFIG } from "@/lib/constants";
 import { NuevaCitaModal } from "./NuevaCitaModal";
 import { EditarCitaModal } from "./EditarCitaModal";
+import { apiDownloadAppointmentPrescription, downloadBlobAsFile } from "@/lib/api";
 
 const ESTADOS: Array<CitaEstado | "TODAS"> = [
   "TODAS",
@@ -44,6 +47,19 @@ export function CitasContent() {
   const { pacientes, fetchPacientes } = usePacientesStore();
   const [showNuevaModal, setShowNuevaModal] = useState(false);
   const [citaToEdit, setCitaToEdit] = useState<Cita | null>(null);
+  const [downloadingPrescriptionId, setDownloadingPrescriptionId] = useState<string | null>(null);
+
+  const handleDownloadPrescription = async (cita: Cita) => {
+    try {
+      setDownloadingPrescriptionId(cita.id);
+      const blob = await apiDownloadAppointmentPrescription(cita.id);
+      downloadBlobAsFile(blob, `recipe-cita-${cita.id}.pdf`);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Error al descargar récipe médico");
+    } finally {
+      setDownloadingPrescriptionId(null);
+    }
+  };
 
   useEffect(() => {
     fetchCitas();
@@ -263,6 +279,21 @@ export function CitasContent() {
                             className="px-2 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 text-xs font-medium transition-colors"
                           >
                             Completar
+                          </button>
+                        )}
+                        {cita.estado === "COMPLETADA" && (
+                          <button
+                            onClick={() => handleDownloadPrescription(cita)}
+                            disabled={downloadingPrescriptionId === cita.id}
+                            title="Descargar Récipe / Resumen de Consulta (PDF)"
+                            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-medium transition-colors border border-emerald-200 dark:border-emerald-500/20 disabled:opacity-50"
+                          >
+                            {downloadingPrescriptionId === cita.id ? (
+                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            ) : (
+                              <Download className="w-3.5 h-3.5" />
+                            )}
+                            Récipe
                           </button>
                         )}
                         <button

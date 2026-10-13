@@ -589,3 +589,59 @@ export async function apiGetReportSummary(params?: {
   );
   return res.data;
 }
+
+export async function apiDownloadMedicalLeaveCertificate(id: number | string): Promise<Blob> {
+  const token = getAuthToken();
+  const headers: Record<string, string> = { Accept: "application/pdf" };
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+
+  const res = await fetch(`${API_BASE}/api/v1/medical-leaves/${id}/certificate`, { headers });
+  if (!res.ok) {
+    throw new Error(`Error descargando constancia (${res.status})`);
+  }
+  return res.blob();
+}
+
+export async function apiDownloadAppointmentPrescription(id: number | string): Promise<Blob> {
+  const token = getAuthToken();
+  const headers: Record<string, string> = { Accept: "application/pdf" };
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+
+  const res = await fetch(`${API_BASE}/api/v1/appointments/${id}/prescription`, { headers });
+  if (!res.ok) {
+    throw new Error(`Error descargando récipe (${res.status})`);
+  }
+  return res.blob();
+}
+
+export async function apiExportReports(params?: {
+  format?: "csv" | "pdf";
+  date_from?: string;
+  date_to?: string;
+}): Promise<Blob> {
+  const token = getAuthToken();
+  const headers: Record<string, string> = { Accept: "*/*" };
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+
+  const query = new URLSearchParams();
+  if (params?.format) query.set("format", params.format);
+  if (params?.date_from) query.set("date_from", params.date_from);
+  if (params?.date_to) query.set("date_to", params.date_to);
+
+  const res = await fetch(`${API_BASE}/api/v1/reports/export?${query.toString()}`, { headers });
+  if (!res.ok) {
+    throw new Error(`Error exportando reporte (${res.status})`);
+  }
+  return res.blob();
+}
+
+export function downloadBlobAsFile(blob: Blob, filename: string): void {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}

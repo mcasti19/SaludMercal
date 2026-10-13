@@ -44,15 +44,18 @@ Route::prefix('v1')->group(function () {
 
             Route::post('appointments/{appointment}/status', [AppointmentController::class, 'transition']);
             Route::patch('appointments/{appointment}/reschedule', [AppointmentController::class, 'reschedule']);
+            Route::get('appointments/{appointment}/prescription', [AppointmentController::class, 'prescription']);
             Route::apiResource('appointments', AppointmentController::class)->except('update');
 
             Route::post('medical-leaves/{medical_leave}/review', [MedicalLeaveController::class, 'review']);
             Route::get('medical-leaves/{medical_leave}/attachment', [MedicalLeaveController::class, 'attachment']);
+            Route::get('medical-leaves/{medical_leave}/certificate', [MedicalLeaveController::class, 'certificate']);
             Route::apiResource('medical-leaves', MedicalLeaveController::class)
                 ->parameters(['medical-leaves' => 'medical_leave'])
                 ->except('update');
 
             Route::get('reports/summary', [ReportController::class, 'summary']);
+            Route::get('reports/export', [ReportController::class, 'export']);
         });
     });
 });

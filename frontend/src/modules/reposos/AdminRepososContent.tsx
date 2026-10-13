@@ -2,7 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { useRepososStore } from "@/modules/reposos/reposos.store";
-import { apiDownloadMedicalLeaveAttachment } from "@/lib/api";
+import {
+  apiDownloadMedicalLeaveAttachment,
+  apiDownloadMedicalLeaveCertificate,
+  downloadBlobAsFile,
+} from "@/lib/api";
 import { formatDate } from "@/lib/utils";
 import { Reposo, ReposoEstado } from "@/types";
 import {
@@ -31,6 +35,19 @@ export function AdminRepososContent() {
   const [attachmentUrl, setAttachmentUrl] = useState<string | null>(null);
   const [isLoadingAttachment, setIsLoadingAttachment] = useState(false);
   const [attachmentError, setAttachmentError] = useState<string | null>(null);
+  const [downloadingCertId, setDownloadingCertId] = useState<string | null>(null);
+
+  const handleDownloadCertificate = async (reposo: Reposo) => {
+    try {
+      setDownloadingCertId(reposo.id);
+      const blob = await apiDownloadMedicalLeaveCertificate(reposo.id);
+      downloadBlobAsFile(blob, `constancia-reposo-${reposo.id}.pdf`);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Error al descargar constancia");
+    } finally {
+      setDownloadingCertId(null);
+    }
+  };
 
   useEffect(() => {
     fetchReposos();
@@ -231,17 +248,34 @@ export function AdminRepososContent() {
                       {getEstadoBadge(reposo.estado)}
                     </td>
                     <td className="px-6 py-4">
-                      <button
-                        onClick={() => {
-                          setReposoToReview(reposo);
-                          setNotasAdmin(reposo.notasAdmin || "");
-                          setActionError(null);
-                        }}
-                        className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-500/10 hover:bg-blue-100 dark:hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 text-xs font-medium transition-colors border border-blue-200 dark:border-blue-500/20"
-                      >
-                        <Eye className="w-3.5 h-3.5" />
-                        Revisar
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => {
+                            setReposoToReview(reposo);
+                            setNotasAdmin(reposo.notasAdmin || "");
+                            setActionError(null);
+                          }}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-500/10 hover:bg-blue-100 dark:hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 text-xs font-medium transition-colors border border-blue-200 dark:border-blue-500/20"
+                        >
+                          <Eye className="w-3.5 h-3.5" />
+                          Revisar
+                        </button>
+                        {reposo.estado === "APROBADO" && (
+                          <button
+                            onClick={() => handleDownloadCertificate(reposo)}
+                            disabled={downloadingCertId === reposo.id}
+                            title="Descargar Constancia Oficial (PDF)"
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-medium transition-colors border border-emerald-200 dark:border-emerald-500/20 disabled:opacity-50"
+                          >
+                            {downloadingCertId === reposo.id ? (
+                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            ) : (
+                              <Download className="w-3.5 h-3.5" />
+                            )}
+                            PDF
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -338,33 +372,52 @@ export function AdminRepososContent() {
               </div>
             </div>
 
-            <div className="p-6 border-t border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/30 flex items-center justify-end gap-3">
-              <button
-                type="button"
-                onClick={() => setReposoToReview(null)}
-                disabled={isSubmitting}
-                className="px-4 py-2 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 text-sm font-medium transition-colors disabled:opacity-50"
-              >
-                Cerrar
-              </button>
-              <button
-                type="button"
-                onClick={() => handleReview("RECHAZADO")}
-                disabled={isSubmitting}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-500/30 text-sm font-medium transition-colors border border-red-200 dark:border-red-500/30 disabled:opacity-50"
-              >
-                {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
-                Rechazar
-              </button>
-              <button
-                type="button"
-                onClick={() => handleReview("APROBADO")}
-                disabled={isSubmitting}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-medium transition-colors shadow-lg shadow-emerald-500/20 disabled:opacity-50"
-              >
-                {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
-                Aprobar Reposo
-              </button>
+            <div className="p-6 border-t border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/30 flex items-center justify-between gap-3">
+              <div>
+                {reposoToReview.estado === "APROBADO" && (
+                  <button
+                    type="button"
+                    onClick={() => handleDownloadCertificate(reposoToReview)}
+                    disabled={downloadingCertId === reposoToReview.id}
+                    className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 text-xs font-semibold transition-colors border border-emerald-200 dark:border-emerald-500/20 disabled:opacity-50"
+                  >
+                    {downloadingCertId === reposoToReview.id ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Download className="w-3.5 h-3.5" />
+                    )}
+                    Descargar Constancia Oficial (PDF)
+                  </button>
+                )}
+              </div>
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setReposoToReview(null)}
+                  disabled={isSubmitting}
+                  className="px-4 py-2 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 text-sm font-medium transition-colors disabled:opacity-50"
+                >
+                  Cerrar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleReview("RECHAZADO")}
+                  disabled={isSubmitting}
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-500/30 text-sm font-medium transition-colors border border-red-200 dark:border-red-500/30 disabled:opacity-50"
+                >
+                  {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
+                  Rechazar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleReview("APROBADO")}
+                  disabled={isSubmitting}
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-medium transition-colors shadow-lg shadow-emerald-500/20 disabled:opacity-50"
+                >
+                  {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
+                  Aprobar Reposo
+                </button>
+              </div>
             </div>
           </div>
         </div>

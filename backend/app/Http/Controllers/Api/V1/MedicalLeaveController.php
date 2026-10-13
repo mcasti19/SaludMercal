@@ -9,6 +9,7 @@ use App\Http\Requests\ReviewMedicalLeaveRequest;
 use App\Http\Requests\StoreMedicalLeaveRequest;
 use App\Http\Resources\MedicalLeaveResource;
 use App\Models\MedicalLeave;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -88,6 +89,29 @@ class MedicalLeaveController extends Controller
         abort_unless($medicalLeave->attachment_path && Storage::disk(self::DISK)->exists($medicalLeave->attachment_path), 404, 'Attachment not found.');
 
         return Storage::disk(self::DISK)->download($medicalLeave->attachment_path);
+    }
+
+    public function certificate(MedicalLeave $medicalLeave): Response
+    {
+        $this->authorize('view', $medicalLeave);
+        abort_unless($medicalLeave->status === MedicalLeaveStatus::Approved, 422, 'La constancia solo se encuentra disponible para reposos aprobados.');
+
+        $medicalLeave->load(['patient.department', 'doctor', 'reviewer']);
+
+        $pdf = Pdf::loadView('pdf.medical_leave_certificate', [
+            'leave' => $medicalLeave,
+            'patient' => $medicalLeave->patient,
+            'doctor' => $medicalLeave->doctor,
+            'reviewer' => $medicalLeave->reviewer,
+            'generatedAt' => now(),
+        ]);
+
+        $filename = "constancia_reposo_{$medicalLeave->id}.pdf";
+
+        return response($pdf->output(), 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+        ]);
     }
 
     public function destroy(MedicalLeave $medicalLeave): Response

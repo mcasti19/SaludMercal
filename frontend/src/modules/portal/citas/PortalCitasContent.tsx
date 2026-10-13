@@ -6,17 +6,31 @@ import { useCitasStore } from "@/modules/citas/citas.store";
 import { useMedicosStore } from "@/modules/medicos/medicos.store";
 import { SolicitarCitaModal } from "./SolicitarCitaModal";
 import { CitaEstadoBadge } from "@/components/shared/CitaEstadoBadge";
-import { CalendarDays, Plus, Clock, FileText, XCircle, Loader2, AlertCircle } from "lucide-react";
+import { CalendarDays, Plus, Clock, FileText, XCircle, Loader2, AlertCircle, Download } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import { Cita } from "@/types";
+import { apiDownloadAppointmentPrescription, downloadBlobAsFile } from "@/lib/api";
 
 export function PortalCitasContent() {
   const { user } = useAuthStore();
   const { citas, isLoading, error, fetchCitas, updateEstado } = useCitasStore();
   const { medicos, fetchMedicos } = useMedicosStore();
   const [cancellingId, setCancellingId] = useState<string | null>(null);
+  const [downloadingPrescriptionId, setDownloadingPrescriptionId] = useState<string | null>(null);
   
   const [showNuevaModal, setShowNuevaModal] = useState(false);
+
+  const handleDownloadPrescription = async (cita: Cita) => {
+    try {
+      setDownloadingPrescriptionId(cita.id);
+      const blob = await apiDownloadAppointmentPrescription(cita.id);
+      downloadBlobAsFile(blob, `recipe-cita-${cita.id}.pdf`);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Error al descargar récipe médico");
+    } finally {
+      setDownloadingPrescriptionId(null);
+    }
+  };
 
   useEffect(() => {
     fetchCitas();
@@ -157,9 +171,20 @@ export function PortalCitasContent() {
                   </div>
                 )}
                 
-                {cita.estado === "COMPLETADA" && cita.notas && (
-                  <div className="mt-2 p-3 bg-blue-50 dark:bg-blue-500/10 rounded-xl border border-blue-200/50 dark:border-blue-500/20 text-xs text-blue-700 dark:text-blue-400">
-                    <strong>Nota del médico:</strong> {cita.notas}
+                {cita.estado === "COMPLETADA" && (
+                  <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800/60 flex justify-end">
+                    <button
+                      onClick={() => handleDownloadPrescription(cita)}
+                      disabled={downloadingPrescriptionId === cita.id}
+                      className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-semibold transition-colors border border-emerald-200 dark:border-emerald-500/20 disabled:opacity-50"
+                    >
+                      {downloadingPrescriptionId === cita.id ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        <Download className="w-3.5 h-3.5" />
+                      )}
+                      Descargar Récipe / Indicaciones (PDF)
+                    </button>
                   </div>
                 )}
               </div>

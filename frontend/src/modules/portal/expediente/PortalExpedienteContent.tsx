@@ -1,18 +1,49 @@
 "use client";
 
-import { useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useAuthStore } from "@/modules/auth/auth.store";
 import { useCitasStore } from "@/modules/citas/citas.store";
 import { useMedicosStore } from "@/modules/medicos/medicos.store";
 import { useRepososStore } from "@/modules/reposos/reposos.store";
 import { formatDate } from "@/lib/utils";
-import { Activity, CheckCircle2, FileBox, FileText, Pill, Stethoscope, Loader2 } from "lucide-react";
+import { Activity, CheckCircle2, FileBox, FileText, Pill, Stethoscope, Loader2, Download } from "lucide-react";
+import {
+  apiDownloadAppointmentPrescription,
+  apiDownloadMedicalLeaveCertificate,
+  downloadBlobAsFile,
+} from "@/lib/api";
 
 export function PortalExpedienteContent() {
   const { user } = useAuthStore();
   const { citas, isLoading: citasLoading, fetchCitas } = useCitasStore();
   const { reposos, isLoading: repososLoading, fetchReposos } = useRepososStore();
   const { medicos, fetchMedicos } = useMedicosStore();
+  const [downloadingCitaId, setDownloadingCitaId] = useState<string | null>(null);
+  const [downloadingReposoId, setDownloadingReposoId] = useState<string | null>(null);
+
+  const handleDownloadPrescription = async (citaId: string) => {
+    try {
+      setDownloadingCitaId(citaId);
+      const blob = await apiDownloadAppointmentPrescription(citaId);
+      downloadBlobAsFile(blob, `recipe-consulta-${citaId}.pdf`);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Error al descargar récipe médico");
+    } finally {
+      setDownloadingCitaId(null);
+    }
+  };
+
+  const handleDownloadCertificate = async (reposoId: string) => {
+    try {
+      setDownloadingReposoId(reposoId);
+      const blob = await apiDownloadMedicalLeaveCertificate(reposoId);
+      downloadBlobAsFile(blob, `constancia-reposo-${reposoId}.pdf`);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Error al descargar constancia médica");
+    } finally {
+      setDownloadingReposoId(null);
+    }
+  };
 
   useEffect(() => {
     fetchCitas();
@@ -157,6 +188,21 @@ export function PortalExpedienteContent() {
                             </p>
                           </div>
                         )}
+
+                        <div className="pt-2 flex justify-end">
+                          <button
+                            onClick={() => handleDownloadPrescription(cita.id)}
+                            disabled={downloadingCitaId === cita.id}
+                            className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-500/10 hover:bg-blue-100 dark:hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 text-xs font-semibold transition-colors border border-blue-200 dark:border-blue-500/20 disabled:opacity-50"
+                          >
+                            {downloadingCitaId === cita.id ? (
+                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            ) : (
+                              <Download className="w-3.5 h-3.5" />
+                            )}
+                            Descargar Récipe / Indicaciones (PDF)
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -202,6 +248,21 @@ export function PortalExpedienteContent() {
                           {reposo.notasAdmin}
                         </div>
                       )}
+
+                      <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800/60 flex justify-end">
+                        <button
+                          onClick={() => handleDownloadCertificate(reposo.id)}
+                          disabled={downloadingReposoId === reposo.id}
+                          className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-semibold transition-colors border border-emerald-200 dark:border-emerald-500/20 disabled:opacity-50"
+                        >
+                          {downloadingReposoId === reposo.id ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ) : (
+                            <Download className="w-3.5 h-3.5" />
+                          )}
+                          Descargar Constancia Oficial (PDF)
+                        </button>
+                      </div>
                     </div>
                   </div>
                 );

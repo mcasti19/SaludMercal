@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useCitasStore } from "@/modules/citas/citas.store";
 import { usePacientesStore } from "@/modules/pacientes/pacientes.store";
 import { useMedicosStore } from "@/modules/medicos/medicos.store";
+import { apiExportReports, downloadBlobAsFile } from "@/lib/api";
 import { CITA_ESTADO_CONFIG } from "@/lib/constants";
 import { CitaEstado } from "@/types";
-import { BarChart3, TrendingUp, Activity, Loader2 } from "lucide-react";
+import { BarChart3, TrendingUp, Activity, Loader2, FileSpreadsheet, FileText } from "lucide-react";
 
 const ESTADOS: CitaEstado[] = ["PENDIENTE", "CONFIRMADA", "EN_ATENCION", "COMPLETADA", "CANCELADA"];
 
@@ -14,6 +15,7 @@ export function ReportesContent() {
   const { citas, isLoading: citasLoading, fetchCitas } = useCitasStore();
   const { pacientes, isLoading: pacientesLoading, fetchPacientes } = usePacientesStore();
   const { medicos, especialidades, isLoading: medicosLoading, fetchMedicos, fetchEspecialidades } = useMedicosStore();
+  const [exportingFormat, setExportingFormat] = useState<"csv" | "pdf" | null>(null);
 
   useEffect(() => {
     fetchCitas();
@@ -21,6 +23,22 @@ export function ReportesContent() {
     fetchMedicos();
     fetchEspecialidades();
   }, [fetchCitas, fetchPacientes, fetchMedicos, fetchEspecialidades]);
+
+  const handleExport = async (format: "csv" | "pdf") => {
+    setExportingFormat(format);
+    try {
+      const blob = await apiExportReports({ format });
+      const filename =
+        format === "pdf"
+          ? `reporte_ejecutivo_mercal_${new Date().toISOString().slice(0, 10)}.pdf`
+          : `reporte_saludmercal_${new Date().toISOString().slice(0, 10)}.csv`;
+      downloadBlobAsFile(blob, filename);
+    } catch {
+      alert("Error al exportar el reporte. Intente nuevamente.");
+    } finally {
+      setExportingFormat(null);
+    }
+  };
 
   const isLoading =
     (citasLoading && citas.length === 0) ||
@@ -57,19 +75,47 @@ export function ReportesContent() {
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-slate-900 dark:text-white text-2xl font-bold">Reportes y Estadísticas</h1>
           <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
             Análisis del sistema de citas médicas — datos en tiempo real
           </p>
         </div>
-        {isLoading && (
-          <div className="flex items-center gap-2 text-xs font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 px-3 py-1.5 rounded-xl border border-blue-200 dark:border-blue-500/20">
-            <Loader2 className="w-3.5 h-3.5 animate-spin" />
-            <span>Sincronizando datos...</span>
-          </div>
-        )}
+        <div className="flex flex-wrap items-center gap-2.5">
+          {isLoading && (
+            <div className="flex items-center gap-2 text-xs font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 px-3 py-2 rounded-xl border border-blue-200 dark:border-blue-500/20">
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              <span>Sincronizando...</span>
+            </div>
+          )}
+          <button
+            type="button"
+            onClick={() => handleExport("csv")}
+            disabled={exportingFormat !== null}
+            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-medium border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/60 shadow-sm transition-all disabled:opacity-50 cursor-pointer"
+          >
+            {exportingFormat === "csv" ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-500" />
+            ) : (
+              <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-500" />
+            )}
+            <span>Exportar Excel (CSV)</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => handleExport("pdf")}
+            disabled={exportingFormat !== null}
+            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium shadow-md shadow-blue-500/20 transition-all disabled:opacity-50 cursor-pointer"
+          >
+            {exportingFormat === "pdf" ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <FileText className="w-3.5 h-3.5" />
+            )}
+            <span>Reporte Ejecutivo (PDF)</span>
+          </button>
+        </div>
       </div>
 
       {/* KPI Cards */}

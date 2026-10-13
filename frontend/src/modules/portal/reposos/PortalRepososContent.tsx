@@ -4,14 +4,28 @@ import { useState, useEffect } from "react";
 import { useAuthStore } from "@/modules/auth/auth.store";
 import { useRepososStore } from "@/modules/reposos/reposos.store";
 import { NuevoReposoModal } from "./NuevoReposoModal";
-import { FileBox, Plus, Calendar, Clock, CheckCircle2, XCircle, Loader2, AlertCircle } from "lucide-react";
+import { FileBox, Plus, Calendar, Clock, CheckCircle2, XCircle, Loader2, AlertCircle, Download } from "lucide-react";
 import { formatDate } from "@/lib/utils";
-import { ReposoEstado } from "@/types";
+import { Reposo, ReposoEstado } from "@/types";
+import { apiDownloadMedicalLeaveCertificate, downloadBlobAsFile } from "@/lib/api";
 
 export function PortalRepososContent() {
   const { user } = useAuthStore();
   const { reposos, isLoading, error, fetchReposos } = useRepososStore();
   const [showNuevo, setShowNuevo] = useState(false);
+  const [downloadingCertId, setDownloadingCertId] = useState<string | null>(null);
+
+  const handleDownloadCertificate = async (reposo: Reposo) => {
+    try {
+      setDownloadingCertId(reposo.id);
+      const blob = await apiDownloadMedicalLeaveCertificate(reposo.id);
+      downloadBlobAsFile(blob, `constancia-reposo-${reposo.id}.pdf`);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Error al descargar constancia");
+    } finally {
+      setDownloadingCertId(null);
+    }
+  };
 
   useEffect(() => {
     fetchReposos();
@@ -163,6 +177,23 @@ export function PortalRepososContent() {
                   <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-800/50 text-sm text-blue-800 dark:text-blue-200">
                     <span className="font-semibold mr-1">Nota de la empresa:</span>
                     {reposo.notasAdmin}
+                  </div>
+                )}
+
+                {reposo.estado === "APROBADO" && (
+                  <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800/60 flex justify-end">
+                    <button
+                      onClick={() => handleDownloadCertificate(reposo)}
+                      disabled={downloadingCertId === reposo.id}
+                      className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-semibold transition-colors border border-emerald-200 dark:border-emerald-500/20 disabled:opacity-50"
+                    >
+                      {downloadingCertId === reposo.id ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        <Download className="w-3.5 h-3.5" />
+                      )}
+                      Descargar Constancia Oficial (PDF)
+                    </button>
                   </div>
                 )}
               </div>

@@ -11,6 +11,7 @@ use App\Http\Requests\TransitionAppointmentRequest;
 use App\Http\Resources\AppointmentResource;
 use App\Models\Appointment;
 use App\Services\AppointmentService;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -103,6 +104,28 @@ class AppointmentController extends Controller
         $appointment = $this->appointments->transition($appointment, $target, $request->user(), $request->validated('comment'));
 
         return new AppointmentResource($appointment->load([...self::RELATIONS, 'statusHistory']));
+    }
+
+    public function prescription(Appointment $appointment): Response
+    {
+        $this->authorize('view', $appointment);
+        abort_unless($appointment->status === AppointmentStatus::Completed, 422, 'El récipe/resumen de consulta solo se encuentra disponible para citas completadas.');
+
+        $appointment->load(['patient.department', 'doctor.specialty']);
+
+        $pdf = Pdf::loadView('pdf.appointment_prescription', [
+            'appointment' => $appointment,
+            'patient' => $appointment->patient,
+            'doctor' => $appointment->doctor,
+            'generatedAt' => now(),
+        ]);
+
+        $filename = "recipe_consulta_{$appointment->id}.pdf";
+
+        return response($pdf->output(), 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+        ]);
     }
 
     public function destroy(Appointment $appointment): Response
