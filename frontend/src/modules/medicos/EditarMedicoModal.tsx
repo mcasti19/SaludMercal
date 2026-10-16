@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { X, Upload, UserCircle2, AlertCircle } from "lucide-react";
 import { medicoSchema, MedicoFormValues } from "@/lib/schemas";
 import { useMedicosStore } from "./medicos.store";
+import { EspecialidadesSelector } from "./EspecialidadesSelector";
 import { Medico } from "@/types";
 import { TURNOS_CONFIG } from "@/lib/constants";
 import { cn } from "@/lib/utils";
@@ -31,6 +32,12 @@ const TURNO_OPTIONS = Object.entries(TURNOS_CONFIG).map(([k, v]) => ({
   label: `${v.label} (${v.hours})`,
 }));
 
+/** Specialty ids of the doctor with the primary one first. */
+function initialEspecialidadIds(medico: Medico): string[] {
+  const all = medico.especialidadIds?.length ? medico.especialidadIds : [medico.especialidadId];
+  return [medico.especialidadId, ...all.filter((id) => id !== medico.especialidadId)];
+}
+
 export function EditarMedicoModal({ medico, open, onClose }: Props) {
   const { updateMedico, especialidades } = useMedicosStore();
   const [fotoPreview, setFotoPreview] = useState<string | null>(medico.fotoPerfil ?? null);
@@ -50,7 +57,7 @@ export function EditarMedicoModal({ medico, open, onClose }: Props) {
       cedula: medico.cedula ?? "",
       nombre: medico.nombre,
       apellido: medico.apellido,
-      especialidadId: medico.especialidadId,
+      especialidadIds: initialEspecialidadIds(medico),
       turno: medico.turno,
       horaInicio: medico.horaInicio ?? "",
       horaFin: medico.horaFin ?? "",
@@ -69,7 +76,7 @@ export function EditarMedicoModal({ medico, open, onClose }: Props) {
         cedula: medico.cedula ?? "",
         nombre: medico.nombre,
         apellido: medico.apellido,
-        especialidadId: medico.especialidadId,
+        especialidadIds: initialEspecialidadIds(medico),
         turno: medico.turno,
         horaInicio: medico.horaInicio ?? "",
         horaFin: medico.horaFin ?? "",
@@ -98,8 +105,10 @@ export function EditarMedicoModal({ medico, open, onClose }: Props) {
 
   const onSubmit = async (data: MedicoFormValues) => {
     setSubmitError(null);
+    const [primaryId] = data.especialidadIds;
     const ok = await updateMedico(medico.id, {
       ...data,
+      especialidadId: primaryId,
       cedula: data.cedula || undefined,
       telefono: data.telefono || undefined,
       email: data.email || undefined,
@@ -200,13 +209,13 @@ export function EditarMedicoModal({ medico, open, onClose }: Props) {
             </div>
 
             <div>
-              <label className={labelCls}>Especialidad *</label>
-              <select {...register("especialidadId")} className={inputCls}>
-                {especialidades.map((e) => (
-                  <option key={e.id} value={e.id}>{e.nombre}</option>
-                ))}
-              </select>
-              {errors.especialidadId && <p className={errorCls}>{errors.especialidadId.message}</p>}
+              <label className={labelCls}>Especialidades *</label>
+              <EspecialidadesSelector
+                especialidades={especialidades}
+                value={watch("especialidadIds") ?? []}
+                onChange={(ids) => setValue("especialidadIds", ids, { shouldValidate: true })}
+              />
+              {errors.especialidadIds && <p className={errorCls}>{errors.especialidadIds.message}</p>}
             </div>
 
             <div>

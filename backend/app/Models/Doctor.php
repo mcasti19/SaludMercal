@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -46,6 +47,12 @@ class Doctor extends Model
         return $this->belongsTo(Specialty::class);
     }
 
+    /** Every specialty the doctor holds (the primary one is also stored in specialty_id). */
+    public function specialties(): BelongsToMany
+    {
+        return $this->belongsToMany(Specialty::class, 'doctor_specialty')->orderBy('name');
+    }
+
     public function location(): BelongsTo
     {
         return $this->belongsTo(Location::class);
@@ -64,6 +71,20 @@ class Doctor extends Model
     public function appointments(): HasMany
     {
         return $this->hasMany(Appointment::class);
+    }
+
+    /**
+     * Replaces the doctor's specialties. The primary one (kept in specialty_id, used by
+     * appointments) is the requested one when it belongs to the set, otherwise the first.
+     *
+     * @param  list<int>  $specialtyIds
+     */
+    public function assignSpecialties(array $specialtyIds, ?int $primaryId = null): void
+    {
+        $primary = in_array($primaryId, $specialtyIds, true) ? $primaryId : $specialtyIds[0];
+
+        $this->specialties()->sync($specialtyIds);
+        $this->forceFill(['specialty_id' => $primary])->save();
     }
 
     public function scopeActive(Builder $query): Builder

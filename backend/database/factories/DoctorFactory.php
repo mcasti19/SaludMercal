@@ -28,6 +28,14 @@ class DoctorFactory extends Factory
         ];
     }
 
+    public function configure(): static
+    {
+        // Keep the doctor↔specialty pivot consistent with the primary specialty_id.
+        return $this->afterCreating(
+            fn (Doctor $doctor) => $doctor->specialties()->syncWithoutDetaching([$doctor->specialty_id])
+        );
+    }
+
     /**
      * Weekday schedule (Mon–Fri) between the given hours.
      */

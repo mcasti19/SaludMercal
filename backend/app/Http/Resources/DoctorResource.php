@@ -16,6 +16,8 @@ class DoctorResource extends JsonResource
             'user_id' => $this->user_id,
             'specialty_id' => $this->specialty_id,
             'specialty' => new CatalogResource($this->whenLoaded('specialty')),
+            'specialty_ids' => $this->whenLoaded('specialties', fn () => $this->specialties->pluck('id')->values()),
+            'specialties' => CatalogResource::collection($this->whenLoaded('specialties')),
             'location_id' => $this->location_id,
             'location' => new CatalogResource($this->whenLoaded('location')),
             'national_id' => $this->national_id,

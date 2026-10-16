@@ -34,7 +34,7 @@ export function MedicosContent() {
   const medicosInactivos = medicos.filter((m) => !m.activo);
 
   const medicosFiltrados = medicos.filter((m) => {
-    const matchEsp = filtroEsp === "TODAS" || m.especialidadId === filtroEsp;
+    const matchEsp = filtroEsp === "TODAS" || (m.especialidadIds ?? [m.especialidadId]).includes(filtroEsp);
     const matchEstado =
       filtroEstado === "TODOS" ||
       (filtroEstado === "ACTIVOS" && m.activo) ||
@@ -44,7 +44,7 @@ export function MedicosContent() {
       !query ||
       m.nombre.toLowerCase().includes(query) ||
       m.apellido.toLowerCase().includes(query) ||
-      m.especialidadNombre.toLowerCase().includes(query) ||
+      (m.especialidadesNombres ?? [m.especialidadNombre]).some((n) => n.toLowerCase().includes(query)) ||
       (m.email ?? "").toLowerCase().includes(query);
     return matchEsp && matchEstado && matchBusqueda;
   });
@@ -104,7 +104,7 @@ export function MedicosContent() {
             </span>
           </button>
           {especialidades.map((esp) => {
-            const count = medicos.filter((m) => m.especialidadId === esp.id && m.activo).length;
+            const count = medicos.filter((m) => (m.especialidadIds ?? [m.especialidadId]).includes(esp.id) && m.activo).length;
             return (
               <button
                 key={esp.id}
@@ -188,7 +188,7 @@ export function MedicosContent() {
                   <p className="text-slate-900 dark:text-white font-semibold leading-tight truncate">
                     Dr. {medico.nombre} {medico.apellido}
                   </p>
-                  <p className="text-blue-500 dark:text-blue-400 text-xs mt-0.5">{medico.especialidadNombre}</p>
+                  <p className="text-blue-500 dark:text-blue-400 text-xs mt-0.5">{(medico.especialidadesNombres?.length ? medico.especialidadesNombres : [medico.especialidadNombre]).join(" · ")}</p>
                   {medico.cedula && (
                     <p className="text-slate-400 dark:text-slate-500 text-xs">{medico.cedula}</p>
                   )}

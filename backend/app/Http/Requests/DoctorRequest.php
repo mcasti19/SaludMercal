@@ -21,6 +21,26 @@ class DoctorRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $this->normalizeNationalId();
+
+        // Backwards compatibility: a lone specialty_id means a single-specialty doctor.
+        if (! $this->has('specialty_ids') && $this->filled('specialty_id')) {
+            $this->merge(['specialty_ids' => [$this->input('specialty_id')]]);
+        }
+    }
+
+    /** @return list<int>|null */
+    public function specialtyIds(): ?array
+    {
+        $ids = $this->validated('specialty_ids');
+
+        return $ids === null ? null : array_map('intval', $ids);
+    }
+
+    public function primarySpecialtyId(): ?int
+    {
+        $primary = $this->validated('specialty_id');
+
+        return $primary === null ? null : (int) $primary;
     }
 
     public function rules(): array
@@ -30,7 +50,9 @@ class DoctorRequest extends FormRequest
 
         return [
             'user_id' => ['nullable', 'integer', Rule::exists('users', 'id'), Rule::unique('doctors', 'user_id')->ignore($doctor)],
-            'specialty_id' => [$required, 'integer', Rule::exists('specialties', 'id')],
+            'specialty_id' => ['nullable', 'integer', Rule::exists('specialties', 'id')],
+            'specialty_ids' => [$required, 'array', 'min:1'],
+            'specialty_ids.*' => ['integer', 'distinct', Rule::exists('specialties', 'id')->where('is_active', true)],
             'location_id' => ['nullable', 'integer', Rule::exists('locations', 'id')],
             'national_id' => ['nullable', 'string', 'regex:'.self::NATIONAL_ID_REGEX, Rule::unique('doctors', 'national_id')->ignore($doctor)],
             'license_number' => ['nullable', 'string', 'max:50', Rule::unique('doctors', 'license_number')->ignore($doctor)],

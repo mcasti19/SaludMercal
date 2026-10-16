@@ -18,7 +18,9 @@ class SpecialtyController extends CatalogController
 
     protected function isInUse(Model $model): bool
     {
-        return $model->doctors()->exists();
+        return $model->doctors()->exists()
+            || $model->primaryDoctors()->exists()
+            || $model->medicalExams()->exists();
     }
 
     public function show(Specialty $specialty): CatalogResource

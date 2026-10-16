@@ -28,6 +28,7 @@ import {
   ShieldAlert,
   Droplet,
   ExternalLink,
+  FlaskConical,
 } from "lucide-react";
 import { usePacientesStore } from "./pacientes.store";
 import { useMedicosStore } from "@/modules/medicos/medicos.store";
@@ -40,17 +41,20 @@ import {
 } from "@/lib/api";
 import { NuevoPacienteModal } from "./NuevoPacienteModal";
 import { NuevaCitaModal } from "@/modules/citas/NuevaCitaModal";
+import { ExamenesTab } from "./examenes/ExamenesTab";
+import { useExamenesStore } from "./examenes/examenes.store";
 
 interface PacienteDetalleContentProps {
   patientId: string;
 }
 
-type TabType = "citas" | "reposos" | "ficha";
+type TabType = "citas" | "reposos" | "examenes" | "ficha";
 
 export function PacienteDetalleContent({ patientId }: PacienteDetalleContentProps) {
   const router = useRouter();
   const { currentPaciente, fetchPacienteById, isLoading, error } = usePacientesStore();
   const { medicos, fetchMedicos } = useMedicosStore();
+  const { examenes, fetchExamenes } = useExamenesStore();
 
   const [activeTab, setActiveTab] = useState<TabType>("citas");
   const [showEditModal, setShowEditModal] = useState(false);
@@ -61,7 +65,8 @@ export function PacienteDetalleContent({ patientId }: PacienteDetalleContentProp
   const loadData = useCallback(() => {
     fetchPacienteById(patientId);
     fetchMedicos();
-  }, [fetchPacienteById, fetchMedicos, patientId]);
+    fetchExamenes(patientId);
+  }, [fetchPacienteById, fetchMedicos, fetchExamenes, patientId]);
 
   useEffect(() => {
     loadData();
@@ -366,6 +371,24 @@ export function PacienteDetalleContent({ patientId }: PacienteDetalleContentProp
         </button>
 
         <button
+          onClick={() => setActiveTab("examenes")}
+          className={`pb-3.5 text-sm font-semibold transition-all relative flex items-center gap-2 ${
+            activeTab === "examenes"
+              ? "text-blue-600 dark:text-cyan-400"
+              : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
+          }`}
+        >
+          <FlaskConical className="w-4 h-4" />
+          <span>Exámenes Médicos</span>
+          <span className="px-2 py-0.5 rounded-full text-xs bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+            {examenes.length}
+          </span>
+          {activeTab === "examenes" && (
+            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full" />
+          )}
+        </button>
+
+        <button
           onClick={() => setActiveTab("ficha")}
           className={`pb-3.5 text-sm font-semibold transition-all relative flex items-center gap-2 ${
             activeTab === "ficha"
@@ -494,6 +517,8 @@ export function PacienteDetalleContent({ patientId }: PacienteDetalleContentProp
       )}
 
       {/* TAB CONTENT: REPOSOS MEDICOS */}
+      {activeTab === "examenes" && <ExamenesTab patientId={patientId} citas={appointments} />}
+
       {activeTab === "reposos" && (
         <div className="space-y-4">
           {medicalLeaves.length === 0 ? (

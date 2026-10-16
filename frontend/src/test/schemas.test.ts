@@ -117,7 +117,7 @@ describe("Validation Schemas (src/lib/schemas.ts)", () => {
         cedula: "V-11223344",
         nombre: "Roberto",
         apellido: "García",
-        especialidadId: "1",
+        especialidadIds: ["1", "2"],
         diasLaborables: [1, 3, 5],
         turno: "MANANA",
         cubiculo: "Consultorio 3",

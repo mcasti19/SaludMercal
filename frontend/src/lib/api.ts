@@ -164,6 +164,8 @@ export interface ApiDoctor {
   user_id?: number | null;
   specialty_id: number;
   specialty?: ApiCatalogItem;
+  specialty_ids?: number[];
+  specialties?: ApiCatalogItem[];
   location_id?: number | null;
   location?: ApiCatalogItem;
   national_id?: string | null;
@@ -396,7 +398,8 @@ export async function apiGetDoctors(params?: {
 }
 
 export async function apiCreateDoctor(payload: {
-  specialty_id: number;
+  specialty_ids: number[];
+  specialty_id?: number;
   first_name: string;
   last_name: string;
   national_id?: string | null;
@@ -418,6 +421,7 @@ export async function apiCreateDoctor(payload: {
 export async function apiUpdateDoctor(
   id: number | string,
   payload: Partial<{
+    specialty_ids: number[];
     specialty_id: number;
     first_name: string;
     last_name: string;
@@ -588,6 +592,80 @@ export async function apiDownloadMedicalLeaveAttachment(id: number | string): Pr
 
 export async function apiDeleteMedicalLeave(id: number | string): Promise<void> {
   await apiFetch(`/v1/medical-leaves/${id}`, { method: "DELETE" });
+}
+
+// ─── API Functions: Medical Exams ────────────────────────────────────────────
+
+export interface ApiMedicalExamFile {
+  id: number;
+  original_name: string;
+  mime_type: string;
+  size: number;
+}
+
+export interface ApiMedicalExam {
+  id: number;
+  patient_id: number;
+  specialty_id: number;
+  specialty?: ApiCatalogItem;
+  appointment_id?: number | null;
+  title: string;
+  exam_date: string;
+  notes?: string | null;
+  uploaded_by?: number | null;
+  uploader_name?: string | null;
+  files?: ApiMedicalExamFile[];
+  created_at?: string;
+}
+
+export async function apiGetPatientMedicalExams(
+  patientId: number | string,
+  params?: { specialty_id?: number; from?: string; to?: string }
+): Promise<ApiMedicalExam[]> {
+  const query = new URLSearchParams();
+  if (params?.specialty_id) query.set("specialty_id", String(params.specialty_id));
+  if (params?.from) query.set("from", params.from);
+  if (params?.to) query.set("to", params.to);
+  const qs = query.toString();
+  const res = await apiFetch<{ data: ApiMedicalExam[] }>(
+    `/v1/patients/${patientId}/medical-exams${qs ? `?${qs}` : ""}`
+  );
+  return res.data;
+}
+
+export async function apiCreateMedicalExam(
+  patientId: number | string,
+  payload: FormData
+): Promise<ApiMedicalExam> {
+  const res = await apiFetch<{ data: ApiMedicalExam }>(`/v1/patients/${patientId}/medical-exams`, {
+    method: "POST",
+    body: payload,
+  });
+  return res.data;
+}
+
+export async function apiDeleteMedicalExam(id: number | string): Promise<void> {
+  await apiFetch(`/v1/medical-exams/${id}`, { method: "DELETE" });
+}
+
+/** Fetches one exam file as a Blob. Inline views and downloads are audited separately. */
+export async function apiFetchMedicalExamFile(
+  examId: number | string,
+  fileId: number | string,
+  download: boolean
+): Promise<Blob> {
+  const token = getAuthToken();
+  const headers: Record<string, string> = { Accept: "*/*" };
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+
+  const res = await fetch(
+    `${API_BASE}/api/v1/medical-exams/${examId}/files/${fileId}${download ? "?download=1" : ""}`,
+    { headers }
+  );
+  if (!res.ok) {
+    throw new Error(`No se pudo obtener el archivo (${res.status})`);
+  }
+  return res.blob();
 }
 
 // ─── API Functions: Reports ──────────────────────────────────────────────────

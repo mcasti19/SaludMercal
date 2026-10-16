@@ -76,6 +76,27 @@ export interface Paciente {
   medical_leaves?: Reposo[];
 }
 
+// Examen médico (expediente del paciente)
+export interface ExamenArchivo {
+  id: string;
+  nombre: string;
+  mimeType: string;
+  tamano: number; // bytes
+}
+
+export interface Examen {
+  id: string;
+  pacienteId: string;
+  especialidadId: string;
+  especialidadNombre: string;
+  citaId?: string;
+  titulo: string;
+  fecha: string; // YYYY-MM-DD
+  notas?: string;
+  subidoPor?: string;
+  archivos: ExamenArchivo[];
+}
+
 // Especialidad
 export interface Especialidad {
   id: string;
@@ -89,8 +110,12 @@ export interface Medico {
   cedula?: string;
   nombre: string;
   apellido: string;
+  /** Especialidad principal (la usan las citas). */
   especialidadId: string;
   especialidadNombre: string;
+  /** Todas las especialidades del médico (incluye la principal). */
+  especialidadIds?: string[];
+  especialidadesNombres?: string[];
   diasLaborables: number[]; // 0=Dom, 1=Lun, 2=Mar, 3=Mie, 4=Jue, 5=Vie, 6=Sab
   turno: "MANANA" | "TARDE" | "NOCTURNO";
   horaInicio?: string; // HH:mm

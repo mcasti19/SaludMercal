@@ -53,6 +53,14 @@ return new class extends Migration
             $table->index(['specialty_id', 'is_active']);
         });
 
+        // A doctor can hold several specialties; doctors.specialty_id is the primary one.
+        Schema::create('doctor_specialty', function (Blueprint $table) {
+            $table->foreignId('doctor_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('specialty_id')->constrained()->restrictOnDelete();
+
+            $table->primary(['doctor_id', 'specialty_id']);
+        });
+
         Schema::create('doctor_schedules', function (Blueprint $table) {
             $table->id();
             $table->foreignId('doctor_id')->constrained()->cascadeOnDelete();
@@ -80,6 +88,7 @@ return new class extends Migration
     {
         Schema::dropIfExists('doctor_time_offs');
         Schema::dropIfExists('doctor_schedules');
+        Schema::dropIfExists('doctor_specialty');
         Schema::dropIfExists('doctors');
         Schema::dropIfExists('patients');
     }

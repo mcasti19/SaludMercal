@@ -28,6 +28,8 @@ export function mapApiDoctor(d: ApiDoctor): Medico {
     apellido: d.last_name,
     especialidadId: String(d.specialty_id),
     especialidadNombre: d.specialty?.name ?? "",
+    especialidadIds: (d.specialties ?? (d.specialty ? [d.specialty] : [])).map((s) => String(s.id)),
+    especialidadesNombres: (d.specialties ?? (d.specialty ? [d.specialty] : [])).map((s) => s.name),
     diasLaborables: days.length > 0 ? days : [1, 2, 3, 4, 5],
     turno,
     horaInicio: startTime,
@@ -39,6 +41,10 @@ export function mapApiDoctor(d: ApiDoctor): Medico {
     fotoPerfil: d.photo_path ?? undefined,
     creadoEn: d.id ? new Date().toISOString() : undefined,
   };
+}
+
+function toNumericIds(ids: string[]): number[] {
+  return ids.map((id) => parseInt(id, 10)).filter((id) => !Number.isNaN(id));
 }
 
 export function mapApiSpecialty(s: ApiCatalogItem): Especialidad {
@@ -100,7 +106,7 @@ export const useMedicosStore = create<MedicosState>()((set, get) => ({
   addMedico: async (data) => {
     set({ isLoading: true, error: null });
     try {
-      const specialtyId = parseInt(data.especialidadId, 10);
+      const specialtyIds = toNumericIds(data.especialidadIds ?? [data.especialidadId]);
       const schedules: ApiDoctorSchedule[] = (data.diasLaborables || [1, 2, 3, 4, 5]).map(
         (day) => ({
           day_of_week: day,
@@ -110,7 +116,8 @@ export const useMedicosStore = create<MedicosState>()((set, get) => ({
       );
 
       const created = await apiCreateDoctor({
-        specialty_id: isNaN(specialtyId) ? 1 : specialtyId,
+        specialty_ids: specialtyIds,
+        specialty_id: specialtyIds.includes(Number(data.especialidadId)) ? Number(data.especialidadId) : undefined,
         first_name: data.nombre,
         last_name: data.apellido,
         national_id: data.cedula || null,
@@ -138,7 +145,7 @@ export const useMedicosStore = create<MedicosState>()((set, get) => ({
   updateMedico: async (id, data) => {
     set({ isLoading: true, error: null });
     try {
-      const specialtyId = data.especialidadId ? parseInt(data.especialidadId, 10) : undefined;
+      const specialtyIds = data.especialidadIds ? toNumericIds(data.especialidadIds) : undefined;
       const schedules = data.diasLaborables
         ? data.diasLaborables.map((day) => ({
             day_of_week: day,
@@ -148,7 +155,8 @@ export const useMedicosStore = create<MedicosState>()((set, get) => ({
         : undefined;
 
       const updated = await apiUpdateDoctor(id, {
-        specialty_id: specialtyId,
+        specialty_ids: specialtyIds,
+        specialty_id: data.especialidadId ? Number(data.especialidadId) : undefined,
         first_name: data.nombre,
         last_name: data.apellido,
         national_id: data.cedula,

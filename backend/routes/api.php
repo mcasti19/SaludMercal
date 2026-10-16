@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\DepartmentController;
 use App\Http\Controllers\Api\V1\DoctorController;
 use App\Http\Controllers\Api\V1\LocationController;
+use App\Http\Controllers\Api\V1\MedicalExamController;
 use App\Http\Controllers\Api\V1\MedicalLeaveController;
 use App\Http\Controllers\Api\V1\PatientController;
 use App\Http\Controllers\Api\V1\ReportController;
@@ -37,6 +38,13 @@ Route::prefix('v1')->group(function () {
 
             Route::get('patients/me', [PatientController::class, 'me']);
             Route::apiResource('patients', PatientController::class);
+
+            Route::get('patients/{patient}/medical-exams', [MedicalExamController::class, 'index']);
+            Route::post('patients/{patient}/medical-exams', [MedicalExamController::class, 'store']);
+            Route::get('medical-exams/{medical_exam}/files/{file}', [MedicalExamController::class, 'file'])->whereNumber('file');
+            Route::apiResource('medical-exams', MedicalExamController::class)
+                ->parameters(['medical-exams' => 'medical_exam'])
+                ->only(['show', 'destroy']);
 
             Route::get('doctors/{doctor}/availability', [DoctorController::class, 'availability']);
             Route::post('doctors/{doctor}/time-offs', [DoctorController::class, 'storeTimeOff']);

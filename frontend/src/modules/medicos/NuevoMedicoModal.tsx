@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { X, Upload, UserCircle2, AlertCircle } from "lucide-react";
 import { medicoSchema, MedicoFormValues } from "@/lib/schemas";
 import { useMedicosStore } from "./medicos.store";
+import { EspecialidadesSelector } from "./EspecialidadesSelector";
 import { TURNOS_CONFIG } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
@@ -44,12 +45,12 @@ export function NuevoMedicoModal({ open, onClose }: Props) {
     formState: { errors, isSubmitting },
   } = useForm<MedicoFormValues>({
     resolver: zodResolver(medicoSchema),
-    defaultValues: { activo: true, diasLaborables: [1, 2, 3, 4, 5] },
+    defaultValues: { activo: true, diasLaborables: [1, 2, 3, 4, 5], especialidadIds: [] },
   });
 
   useEffect(() => {
     if (!open) {
-      reset({ activo: true, diasLaborables: [1, 2, 3, 4, 5] });
+      reset({ activo: true, diasLaborables: [1, 2, 3, 4, 5], especialidadIds: [] });
       setFotoPreview(null);
       setSubmitError(null);
     }
@@ -69,9 +70,11 @@ export function NuevoMedicoModal({ open, onClose }: Props) {
 
   const onSubmit = async (data: MedicoFormValues) => {
     setSubmitError(null);
-    const especialidadObj = especialidades.find(e => e.id === data.especialidadId);
+    const [primaryId] = data.especialidadIds;
+    const especialidadObj = especialidades.find((e) => e.id === primaryId);
     const ok = await addMedico({
       ...data,
+      especialidadId: primaryId,
       especialidadNombre: especialidadObj?.nombre || "",
       cedula: data.cedula || undefined,
       telefono: data.telefono || undefined,
@@ -175,14 +178,13 @@ export function NuevoMedicoModal({ open, onClose }: Props) {
 
             {/* Especialidad */}
             <div>
-              <label className={labelCls}>Especialidad *</label>
-              <select {...register("especialidadId")} className={inputCls}>
-                <option value="">Seleccione una especialidad...</option>
-                {especialidades.map((e) => (
-                  <option key={e.id} value={e.id}>{e.nombre}</option>
-                ))}
-              </select>
-              {errors.especialidadId && <p className={errorCls}>{errors.especialidadId.message}</p>}
+              <label className={labelCls}>Especialidades *</label>
+              <EspecialidadesSelector
+                especialidades={especialidades}
+                value={watch("especialidadIds") ?? []}
+                onChange={(ids) => setValue("especialidadIds", ids, { shouldValidate: true })}
+              />
+              {errors.especialidadIds && <p className={errorCls}>{errors.especialidadIds.message}</p>}
             </div>
 
             {/* Turno */}

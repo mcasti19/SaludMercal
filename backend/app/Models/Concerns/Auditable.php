@@ -28,6 +28,16 @@ trait Auditable
     }
 
     /**
+     * Records a custom event (e.g. a read access such as "viewed" or "downloaded").
+     *
+     * @param  array<string, mixed>  $context
+     */
+    public function recordAudit(string $event, array $context = []): void
+    {
+        self::writeAudit($this, $event, [], $context ?: ['id' => $this->getKey()]);
+    }
+
+    /**
      * @param  array<string, mixed>  $old
      * @param  array<string, mixed>  $new
      */

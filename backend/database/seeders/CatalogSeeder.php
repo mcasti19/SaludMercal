@@ -23,6 +23,8 @@ class CatalogSeeder extends Seeder
             'Traumatología' => 'Lesiones del sistema musculoesquelético y salud ocupacional',
             'Odontología' => 'Salud bucal, profilaxis y odontología preventiva',
             'Nutrición' => 'Orientación nutricional, dietética y control metabólico',
+            'Laboratorio' => 'Exámenes de laboratorio clínico: hematología, química sanguínea, uroanálisis y otros',
+            'Imagenología' => 'Estudios por imágenes: radiografía, ecografía, tomografía y resonancia',
         ];
 
         foreach ($specialties as $name => $description) {

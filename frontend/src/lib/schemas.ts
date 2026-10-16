@@ -47,6 +47,22 @@ export const citaSchema = z.object({
 
 export type CitaFormValues = z.infer<typeof citaSchema>;
 
+// ── Examen médico ────────────────────────────────────────────────────────────
+export const examenSchema = z.object({
+  especialidadId: z.string().min(1, "Seleccione una especialidad"),
+  titulo: z.string().min(3, "El título debe tener al menos 3 caracteres").max(150, "Máximo 150 caracteres"),
+  fecha: z
+    .string()
+    .min(1, "La fecha es obligatoria")
+    .refine((v) => v <= new Date().toISOString().slice(0, 10), {
+      message: "La fecha no puede ser futura",
+    }),
+  citaId: z.string().optional(),
+  notas: z.string().max(2000, "Máximo 2000 caracteres").optional(),
+});
+
+export type ExamenFormValues = z.infer<typeof examenSchema>;
+
 // ── Médico ───────────────────────────────────────────────────────────────────
 export const medicoSchema = z.object({
   cedula: z
@@ -57,7 +73,7 @@ export const medicoSchema = z.object({
     }),
   nombre: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),
   apellido: z.string().min(2, "El apellido debe tener al menos 2 caracteres"),
-  especialidadId: z.string().min(1, "Seleccione una especialidad"),
+  especialidadIds: z.array(z.string()).min(1, "Seleccione al menos una especialidad"),
   diasLaborables: z.array(z.number()).min(1, "Seleccione al menos un día laborable"),
   turno: z.enum(["MANANA", "TARDE", "NOCTURNO"]),
   horaInicio: z.string().optional(),

@@ -157,6 +157,8 @@ class DoctorSeeder extends Seeder
                 ]
             );
 
+            $doctor->assignSpecialties([$specialty->id]);
+
             // 3. Create weekly schedules
             foreach ($doc['days'] as $day) {
                 DoctorSchedule::updateOrCreate(

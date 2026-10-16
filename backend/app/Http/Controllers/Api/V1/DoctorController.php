@@ -18,7 +18,7 @@ use Illuminate\Support\Facades\DB;
 
 class DoctorController extends Controller
 {
-    private const RELATIONS = ['specialty', 'location', 'schedules'];
+    private const RELATIONS = ['specialty', 'specialties', 'location', 'schedules'];
 
     public function index(Request $request): AnonymousResourceCollection
     {
@@ -27,7 +27,7 @@ class DoctorController extends Controller
         $doctors = Doctor::query()
             ->with(self::RELATIONS)
             ->search($request->query('search'))
-            ->when($request->filled('specialty_id'), fn ($q) => $q->where('specialty_id', $request->integer('specialty_id')))
+            ->when($request->filled('specialty_id'), fn ($q) => $q->whereHas('specialties', fn ($s) => $s->whereKey($request->integer('specialty_id'))))
             ->when($request->filled('location_id'), fn ($q) => $q->where('location_id', $request->integer('location_id')))
             ->when($request->has('is_active'), fn ($q) => $q->where('is_active', $request->boolean('is_active')))
             ->orderBy('last_name')->orderBy('first_name')
@@ -48,7 +48,10 @@ class DoctorController extends Controller
         $this->authorize('create', Doctor::class);
 
         $doctor = DB::transaction(function () use ($request) {
-            $doctor = Doctor::create($request->safe()->except('schedules'));
+            $doctor = Doctor::create($request->safe()->except('schedules', 'specialty_ids', 'specialty_id') + [
+                'specialty_id' => $request->specialtyIds()[0],
+            ]);
+            $doctor->assignSpecialties($request->specialtyIds(), $request->primarySpecialtyId());
             $doctor->schedules()->createMany($request->validated('schedules', []));
 
             return $doctor;
@@ -63,7 +66,11 @@ class DoctorController extends Controller
         $this->authorize('update', $doctor);
 
         DB::transaction(function () use ($request, $doctor) {
-            $doctor->update($request->safe()->except('schedules'));
+            $doctor->update($request->safe()->except('schedules', 'specialty_ids', 'specialty_id'));
+
+            if ($request->specialtyIds() !== null) {
+                $doctor->assignSpecialties($request->specialtyIds(), $request->primarySpecialtyId());
+            }
 
             if ($request->has('schedules')) {
                 $doctor->schedules()->delete();
