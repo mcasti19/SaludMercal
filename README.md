@@ -2,6 +2,8 @@
 
 Sistema de gestión de salud para Mercal Venezuela. Plataforma web full-stack compuesta por un **frontend** en Next.js y un **backend** API en Laravel con PostgreSQL.
 
+> 📘 **Documento Maestro del Sistema:** Para conocer en profundidad la arquitectura, reglas de negocio, modelos de datos, roles y alcances institucionales, consulta el [Manifiesto Maestro de SaludMercal](SALUDMERCAL_MANIFEST.md).
+
 ---
 
 ## 📁 Estructura del Proyecto

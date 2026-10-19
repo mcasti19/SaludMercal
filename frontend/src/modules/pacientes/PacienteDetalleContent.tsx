@@ -1,48 +1,41 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import {
-  ArrowLeft,
-  Calendar,
-  Clock,
-  FileText,
-  FileCheck2,
-  HeartPulse,
-  User,
-  Phone,
-  Mail,
-  MapPin,
-  Building2,
-  AlertTriangle,
-  Download,
-  Plus,
-  RefreshCw,
-  Pencil,
-  AlertCircle,
-  CheckCircle2,
-  XCircle,
-  Clock3,
-  Stethoscope,
-  ShieldAlert,
-  Droplet,
-  ExternalLink,
-  FlaskConical,
-} from "lucide-react";
-import { usePacientesStore } from "./pacientes.store";
-import { useMedicosStore } from "@/modules/medicos/medicos.store";
-import { Paciente, Cita, Reposo } from "@/types";
-import { calcularEdad } from "@/lib/utils";
 import {
   apiDownloadAppointmentPrescription,
   apiDownloadMedicalLeaveCertificate,
   downloadBlobAsFile,
 } from "@/lib/api";
-import { NuevoPacienteModal } from "./NuevoPacienteModal";
+import { calcularEdad } from "@/lib/utils";
 import { NuevaCitaModal } from "@/modules/citas/NuevaCitaModal";
+import { useMedicosStore } from "@/modules/medicos/medicos.store";
+import { Cita, Reposo } from "@/types";
+import {
+  AlertCircle,
+  ArrowLeft,
+  Building2,
+  Calendar,
+  Clock,
+  Download,
+  Droplet,
+  FileCheck2,
+  FileText,
+  FlaskConical,
+  MapPin,
+  Pencil,
+  Phone,
+  Plus,
+  RefreshCw,
+  ShieldAlert,
+  Stethoscope,
+  Users,
+} from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
+import { NuevoPacienteModal } from "./NuevoPacienteModal";
 import { ExamenesTab } from "./examenes/ExamenesTab";
 import { useExamenesStore } from "./examenes/examenes.store";
+import { usePacientesStore } from "./pacientes.store";
 
 interface PacienteDetalleContentProps {
   patientId: string;
@@ -50,9 +43,12 @@ interface PacienteDetalleContentProps {
 
 type TabType = "citas" | "reposos" | "examenes" | "ficha";
 
-export function PacienteDetalleContent({ patientId }: PacienteDetalleContentProps) {
+export function PacienteDetalleContent({
+  patientId,
+}: PacienteDetalleContentProps) {
   const router = useRouter();
-  const { currentPaciente, fetchPacienteById, isLoading, error } = usePacientesStore();
+  const { currentPaciente, fetchPacienteById, isLoading, error } =
+    usePacientesStore();
   const { medicos, fetchMedicos } = useMedicosStore();
   const { examenes, fetchExamenes } = useExamenesStore();
 
@@ -82,7 +78,9 @@ export function PacienteDetalleContent({ patientId }: PacienteDetalleContentProp
       downloadBlobAsFile(blob, filename);
     } catch (err) {
       setDownloadError(
-        err instanceof Error ? err.message : "Error al descargar el récipe médico"
+        err instanceof Error
+          ? err.message
+          : "Error al descargar el récipe médico",
       );
     } finally {
       setDownloadingId(null);
@@ -99,7 +97,9 @@ export function PacienteDetalleContent({ patientId }: PacienteDetalleContentProp
       downloadBlobAsFile(blob, filename);
     } catch (err) {
       setDownloadError(
-        err instanceof Error ? err.message : "Error al descargar la constancia de reposo"
+        err instanceof Error
+          ? err.message
+          : "Error al descargar la constancia de reposo",
       );
     } finally {
       setDownloadingId(null);
@@ -130,7 +130,8 @@ export function PacienteDetalleContent({ patientId }: PacienteDetalleContentProp
           No se encontró el paciente
         </h2>
         <p className="text-slate-500 text-sm">
-          {error ?? "El paciente solicitado no existe en la base de datos o ha sido dado de baja."}
+          {error ??
+            "El paciente solicitado no existe en la base de datos o ha sido dado de baja."}
         </p>
         <Link
           href="/pacientes"
@@ -165,7 +166,9 @@ export function PacienteDetalleContent({ patientId }: PacienteDetalleContentProp
             className="p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors"
             title="Actualizar expediente"
           >
-            <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin text-blue-500" : ""}`} />
+            <RefreshCw
+              className={`w-4 h-4 ${isLoading ? "animate-spin text-blue-500" : ""}`}
+            />
           </button>
           <button
             onClick={() => setShowEditModal(true)}
@@ -213,7 +216,11 @@ export function PacienteDetalleContent({ patientId }: PacienteDetalleContentProp
                 className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-2 border-white dark:border-slate-900 ${
                   p.estado === "ACTIVO" ? "bg-emerald-500" : "bg-slate-400"
                 }`}
-                title={p.estado === "ACTIVO" ? "Paciente Activo" : "Paciente Inactivo"}
+                title={
+                  p.estado === "ACTIVO"
+                    ? "Paciente Activo"
+                    : "Paciente Inactivo"
+                }
               />
             </div>
 
@@ -313,7 +320,10 @@ export function PacienteDetalleContent({ patientId }: PacienteDetalleContentProp
               <ShieldAlert className="w-3.5 h-3.5 text-amber-500" />
               Alergias Conocidas
             </span>
-            <p className="text-sm font-medium text-slate-800 dark:text-slate-200 truncate" title={p.alergias ?? "Ninguna alergia registrada"}>
+            <p
+              className="text-sm font-medium text-slate-800 dark:text-slate-200 truncate"
+              title={p.alergias ?? "Ninguna alergia registrada"}
+            >
               {p.alergias ? p.alergias : "Ninguna registrada"}
             </p>
             <p className="text-xs text-slate-400">Expediente alergológico</p>
@@ -327,7 +337,9 @@ export function PacienteDetalleContent({ patientId }: PacienteDetalleContentProp
             <p className="text-sm font-semibold text-slate-800 dark:text-slate-200 truncate">
               {p.contactoEmergenciaNombre ?? "No registrado"}
             </p>
-            <p className="text-xs text-slate-400">{p.contactoEmergenciaTelefono ?? "Sin teléfono"}</p>
+            <p className="text-xs text-slate-400">
+              {p.contactoEmergenciaTelefono ?? "Sin teléfono"}
+            </p>
           </div>
         </div>
       </div>
@@ -414,7 +426,8 @@ export function PacienteDetalleContent({ patientId }: PacienteDetalleContentProp
                 No hay consultas registradas
               </h3>
               <p className="text-slate-500 text-sm mt-1 mb-5">
-                El paciente aún no posee citas o atenciones médicas en el sistema.
+                El paciente aún no posee citas o atenciones médicas en el
+                sistema.
               </p>
               <button
                 onClick={() => setShowNewCitaModal(true)}
@@ -430,7 +443,8 @@ export function PacienteDetalleContent({ patientId }: PacienteDetalleContentProp
                 const isCompleted = apt.estado === "COMPLETADA";
                 const isPending = apt.estado === "PENDIENTE";
                 const isConfirmed = apt.estado === "CONFIRMADA";
-                const isDownloading = downloadingId === `prescription-${apt.id}`;
+                const isDownloading =
+                  downloadingId === `prescription-${apt.id}`;
 
                 return (
                   <div
@@ -448,10 +462,10 @@ export function PacienteDetalleContent({ patientId }: PacienteDetalleContentProp
                               isCompleted
                                 ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800"
                                 : isConfirmed
-                                ? "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-800"
-                                : isPending
-                                ? "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800"
-                                : "bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700"
+                                  ? "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-800"
+                                  : isPending
+                                    ? "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800"
+                                    : "bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700"
                             }`}
                           >
                             {apt.estado}
@@ -482,8 +496,12 @@ export function PacienteDetalleContent({ patientId }: PacienteDetalleContentProp
                           className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/50 dark:hover:bg-blue-900/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/80 text-xs font-semibold transition-all shrink-0 self-start disabled:opacity-50"
                           title="Descargar récipe y órdenes médicas en formato PDF oficial"
                         >
-                          <Download className={`w-3.5 h-3.5 ${isDownloading ? "animate-bounce" : ""}`} />
-                          {isDownloading ? "Generando PDF..." : "Descargar Récipe (PDF)"}
+                          <Download
+                            className={`w-3.5 h-3.5 ${isDownloading ? "animate-bounce" : ""}`}
+                          />
+                          {isDownloading
+                            ? "Generando PDF..."
+                            : "Descargar Récipe (PDF)"}
                         </button>
                       )}
                     </div>
@@ -517,7 +535,9 @@ export function PacienteDetalleContent({ patientId }: PacienteDetalleContentProp
       )}
 
       {/* TAB CONTENT: REPOSOS MEDICOS */}
-      {activeTab === "examenes" && <ExamenesTab patientId={patientId} citas={appointments} />}
+      {activeTab === "examenes" && (
+        <ExamenesTab patientId={patientId} citas={appointments} />
+      )}
 
       {activeTab === "reposos" && (
         <div className="space-y-4">
@@ -528,7 +548,8 @@ export function PacienteDetalleContent({ patientId }: PacienteDetalleContentProp
                 No posee reposos médicos registrados
               </h3>
               <p className="text-slate-500 text-sm mt-1">
-                El paciente no tiene reposos laborales ni certificados médicos emitidos.
+                El paciente no tiene reposos laborales ni certificados médicos
+                emitidos.
               </p>
             </div>
           ) : (
@@ -554,8 +575,8 @@ export function PacienteDetalleContent({ patientId }: PacienteDetalleContentProp
                               isApproved
                                 ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800"
                                 : isPending
-                                ? "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800"
-                                : "bg-red-50 text-red-700 border-red-200 dark:bg-red-950/60 dark:text-red-300 dark:border-red-800"
+                                  ? "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800"
+                                  : "bg-red-50 text-red-700 border-red-200 dark:bg-red-950/60 dark:text-red-300 dark:border-red-800"
                             }`}
                           >
                             {leave.estado}
@@ -571,10 +592,16 @@ export function PacienteDetalleContent({ patientId }: PacienteDetalleContentProp
 
                         <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500">
                           <span>
-                            Desde: <strong className="text-slate-700 dark:text-slate-300">{leave.fechaInicio}</strong>
+                            Desde:{" "}
+                            <strong className="text-slate-700 dark:text-slate-300">
+                              {leave.fechaInicio}
+                            </strong>
                           </span>
                           <span>
-                            Hasta: <strong className="text-slate-700 dark:text-slate-300">{leave.fechaFin}</strong>
+                            Hasta:{" "}
+                            <strong className="text-slate-700 dark:text-slate-300">
+                              {leave.fechaFin}
+                            </strong>
                           </span>
                         </div>
                       </div>
@@ -582,13 +609,19 @@ export function PacienteDetalleContent({ patientId }: PacienteDetalleContentProp
                       {/* Download Certificate PDF */}
                       {isApproved && (
                         <button
-                          onClick={() => handleDownloadLeaveCertificate(leave.id)}
+                          onClick={() =>
+                            handleDownloadLeaveCertificate(leave.id)
+                          }
                           disabled={isDownloading}
                           className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/50 dark:hover:bg-amber-900/60 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/80 text-xs font-semibold transition-all shrink-0 self-start disabled:opacity-50"
                           title="Descargar constancia oficial de convalidación de reposo médico"
                         >
-                          <Download className={`w-3.5 h-3.5 ${isDownloading ? "animate-bounce" : ""}`} />
-                          {isDownloading ? "Generando PDF..." : "Descargar Constancia (PDF)"}
+                          <Download
+                            className={`w-3.5 h-3.5 ${isDownloading ? "animate-bounce" : ""}`}
+                          />
+                          {isDownloading
+                            ? "Generando PDF..."
+                            : "Descargar Constancia (PDF)"}
                         </button>
                       )}
                     </div>
@@ -609,7 +642,10 @@ export function PacienteDetalleContent({ patientId }: PacienteDetalleContentProp
                           Revisión / Convalidación RRHH:
                         </span>
                         <p className="text-slate-600 dark:text-slate-400 whitespace-pre-line">
-                          {leave.notasAdmin ?? (isPending ? "Pendiente de evaluación médica." : "Convalidado conforme.")}
+                          {leave.notasAdmin ??
+                            (isPending
+                              ? "Pendiente de evaluación médica."
+                              : "Convalidado conforme.")}
                         </p>
                       </div>
                     </div>
@@ -634,14 +670,18 @@ export function PacienteDetalleContent({ patientId }: PacienteDetalleContentProp
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-4">
               <div>
-                <span className="text-xs text-slate-400 uppercase font-semibold">Sede de Trabajo</span>
+                <span className="text-xs text-slate-400 uppercase font-semibold">
+                  Sede de Trabajo
+                </span>
                 <p className="text-slate-900 dark:text-white font-medium text-base mt-0.5">
                   {p.sede ?? "Sede Central Mercal"}
                 </p>
               </div>
 
               <div>
-                <span className="text-xs text-slate-400 uppercase font-semibold">Tipo de Instalación</span>
+                <span className="text-xs text-slate-400 uppercase font-semibold">
+                  Tipo de Instalación
+                </span>
                 <p className="text-slate-800 dark:text-slate-200 text-sm mt-0.5">
                   {p.isHeadquarters ? (
                     <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
@@ -655,35 +695,107 @@ export function PacienteDetalleContent({ patientId }: PacienteDetalleContentProp
               </div>
 
               <div>
-                <span className="text-xs text-slate-400 uppercase font-semibold">Estado / Entidad Federal</span>
+                <span className="text-xs text-slate-400 uppercase font-semibold">
+                  Estado / Entidad Federal
+                </span>
                 <p className="text-slate-800 dark:text-slate-200 text-sm mt-0.5">
-                  {p.location?.state ?? (p.isHeadquarters ? "Distrito Capital" : "Nacional")}
+                  {p.location?.state ??
+                    (p.isHeadquarters ? "Distrito Capital" : "Nacional")}
                 </p>
               </div>
             </div>
 
             <div className="space-y-4">
               <div>
-                <span className="text-xs text-slate-400 uppercase font-semibold">Departamento</span>
+                <span className="text-xs text-slate-400 uppercase font-semibold">
+                  Departamento
+                </span>
                 <p className="text-slate-900 dark:text-white font-medium text-base mt-0.5">
                   {p.departamento}
                 </p>
               </div>
 
               <div>
-                <span className="text-xs text-slate-400 uppercase font-semibold">Cargo / Posición</span>
+                <span className="text-xs text-slate-400 uppercase font-semibold">
+                  Cargo / Posición
+                </span>
                 <p className="text-slate-800 dark:text-slate-200 text-sm mt-0.5">
                   {p.cargo ?? "Trabajador Activo"}
                 </p>
               </div>
 
               <div>
-                <span className="text-xs text-slate-400 uppercase font-semibold">Correo y Contacto Laboral</span>
+                <span className="text-xs text-slate-400 uppercase font-semibold">
+                  Correo y Contacto Laboral
+                </span>
                 <p className="text-slate-800 dark:text-slate-200 text-sm mt-0.5">
-                  {p.email || "No registrado"} {p.telefono ? `· ${p.telefono}` : ""}
+                  {p.email || "No registrado"}{" "}
+                  {p.telefono ? `· ${p.telefono}` : ""}
                 </p>
               </div>
             </div>
+          </div>
+
+          {/* Núcleo Familiar / Beneficiarios */}
+          <div className="pt-6 border-t border-slate-100 dark:border-slate-750">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2.5">
+                <Users className="w-5 h-5 text-emerald-500" />
+                <div>
+                  <h4 className="text-base font-bold text-slate-900 dark:text-white">
+                    Núcleo Familiar y Beneficiarios Directos
+                  </h4>
+                  <p className="text-slate-500 dark:text-slate-400 text-xs">
+                    Familiares con derecho a atención institucional (Padres,
+                    Hijos, Cónyuge)
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowEditModal(true)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-xs font-semibold hover:bg-emerald-100 dark:hover:bg-emerald-500/20 transition-colors"
+              >
+                <Pencil className="w-3.5 h-3.5" />
+                Gestionar Beneficiarios
+              </button>
+            </div>
+
+            {!p.beneficiaries || p.beneficiaries.length === 0 ? (
+              <div className="p-5 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700/60 text-center">
+                <p className="text-slate-500 dark:text-slate-400 text-xs">
+                  No se han registrado familiares directos para este paciente
+                  aún.
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {p.beneficiaries.map((b) => (
+                  <div
+                    key={b.id}
+                    className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700/60 flex items-start gap-3"
+                  >
+                    <div className="w-9 h-9 rounded-xl bg-slate-200 dark:bg-slate-800 flex items-center justify-center font-bold text-slate-700 dark:text-slate-300 text-xs shrink-0">
+                      {b.first_name[0]}
+                      {b.last_name[0]}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                        {b.relationship_label ?? b.relationship}
+                      </span>
+                      <p className="text-slate-900 dark:text-white font-semibold text-xs mt-1 truncate">
+                        {b.first_name} {b.last_name}
+                      </p>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 font-mono mt-0.5">
+                        {b.national_id
+                          ? `C.I. ${b.national_id}`
+                          : "Menor de edad (Sin cédula)"}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}

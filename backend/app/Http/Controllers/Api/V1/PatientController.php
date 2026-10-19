@@ -18,7 +18,7 @@ class PatientController extends Controller
         $this->authorize('viewAny', Patient::class);
 
         $patients = Patient::query()
-            ->with(['department', 'location'])
+            ->with(['department', 'location', 'beneficiaries'])
             ->visibleTo($request->user())
             ->search($request->query('search'))
             ->when($request->filled('department_id'), fn ($q) => $q->where('department_id', $request->integer('department_id')))
@@ -38,9 +38,11 @@ class PatientController extends Controller
             $patient->load([
                 'department',
                 'location',
+                'beneficiaries' => fn ($q) => $q->orderBy('id'),
                 'appointments' => fn ($q) => $q->orderByDesc('scheduled_date')->orderByDesc('start_time'),
                 'appointments.doctor.specialty',
                 'appointments.location',
+                'appointments.beneficiary',
                 'medicalLeaves' => fn ($q) => $q->orderByDesc('start_date'),
                 'medicalLeaves.doctor',
                 'medicalLeaves.reviewer',
@@ -51,7 +53,7 @@ class PatientController extends Controller
     /** The patient record linked to the authenticated user (employee portal). */
     public function me(Request $request): PatientResource
     {
-        $patient = $request->user()->patient()->with(['department', 'location'])->firstOrFail();
+        $patient = $request->user()->patient()->with(['department', 'location', 'beneficiaries'])->firstOrFail();
 
         return new PatientResource($patient);
     }
@@ -60,9 +62,26 @@ class PatientController extends Controller
     {
         $this->authorize('create', Patient::class);
 
-        $patient = Patient::create($request->validated());
+        $data = $request->validated();
+        $beneficiariesData = $data['beneficiaries'] ?? null;
+        unset($data['beneficiaries']);
 
-        return (new PatientResource($patient->refresh()->load(['department', 'location'])))
+        $patient = \Illuminate\Support\Facades\DB::transaction(function () use ($data, $beneficiariesData) {
+            $patient = Patient::create($data);
+
+            if (is_array($beneficiariesData)) {
+                foreach ($beneficiariesData as $bData) {
+                    if (empty($bData['_delete'])) {
+                        unset($bData['_delete'], $bData['id']);
+                        $patient->beneficiaries()->create($bData);
+                    }
+                }
+            }
+
+            return $patient;
+        });
+
+        return (new PatientResource($patient->refresh()->load(['department', 'location', 'beneficiaries'])))
             ->response()->setStatusCode(201);
     }
 
@@ -70,9 +89,36 @@ class PatientController extends Controller
     {
         $this->authorize('update', $patient);
 
-        $patient->update($request->validated());
+        $data = $request->validated();
+        $beneficiariesData = $data['beneficiaries'] ?? null;
+        unset($data['beneficiaries']);
 
-        return new PatientResource($patient->load(['department', 'location']));
+        \Illuminate\Support\Facades\DB::transaction(function () use ($patient, $data, $beneficiariesData) {
+            $patient->update($data);
+
+            if (is_array($beneficiariesData)) {
+                foreach ($beneficiariesData as $bData) {
+                    if (! empty($bData['_delete']) && ! empty($bData['id'])) {
+                        $patient->beneficiaries()->where('id', $bData['id'])->delete();
+                        continue;
+                    }
+
+                    unset($bData['_delete']);
+
+                    if (! empty($bData['id'])) {
+                        $beneficiary = $patient->beneficiaries()->where('id', $bData['id'])->first();
+                        if ($beneficiary) {
+                            $beneficiary->update($bData);
+                        }
+                    } else {
+                        unset($bData['id']);
+                        $patient->beneficiaries()->create($bData);
+                    }
+                }
+            }
+        });
+
+        return new PatientResource($patient->load(['department', 'location', 'beneficiaries']));
     }
 
     public function destroy(Patient $patient): Response|JsonResponse

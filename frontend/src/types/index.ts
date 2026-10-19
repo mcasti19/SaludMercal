@@ -4,7 +4,14 @@
 // ============================================================
 
 // Auth / Session
-export type UserRole = "SUPERADMIN" | "SEGURIDAD_LOGICA" | "ADMIN" | "RECEPCION" | "MEDICO" | "ENFERMERIA" | "EMPLEADO";
+export type UserRole =
+  | "SUPERADMIN"
+  | "SEGURIDAD_LOGICA"
+  | "ADMIN"
+  | "RECEPCION"
+  | "MEDICO"
+  | "ENFERMERIA"
+  | "EMPLEADO";
 
 export interface SystemUser {
   id: number;
@@ -48,6 +55,30 @@ export interface AuthUser {
   isHeadquarters?: boolean;
 }
 
+// Beneficiarios Familiares del Paciente
+export type ParentescoBeneficiario =
+  | "conyuge"
+  | "hijo"
+  | "hija"
+  | "padre"
+  | "madre";
+
+export interface Beneficiario {
+  id?: number | string;
+  patient_id?: number | string;
+  first_name: string;
+  last_name: string;
+  full_name?: string;
+  relationship: ParentescoBeneficiario;
+  relationship_label?: string;
+  national_id?: string | null;
+  birth_date?: string | null;
+  gender?: string | null;
+  phone?: string | null;
+  is_active?: boolean;
+  _delete?: boolean;
+}
+
 // Paciente
 export interface Paciente {
   id: string;
@@ -72,6 +103,7 @@ export interface Paciente {
   alergias?: string;
   contactoEmergenciaNombre?: string;
   contactoEmergenciaTelefono?: string;
+  beneficiaries?: Beneficiario[];
   appointments?: Cita[];
   medical_leaves?: Reposo[];
 }
@@ -119,13 +151,13 @@ export interface Medico {
   diasLaborables: number[]; // 0=Dom, 1=Lun, 2=Mar, 3=Mie, 4=Jue, 5=Vie, 6=Sab
   turno: "MANANA" | "TARDE" | "NOCTURNO";
   horaInicio?: string; // HH:mm
-  horaFin?: string;    // HH:mm
+  horaFin?: string; // HH:mm
   cubiculo: string;
   telefono?: string;
   email?: string;
   activo: boolean;
   fotoPerfil?: string; // base64 data URL
-  creadoEn?: string;   // ISO datetime
+  creadoEn?: string; // ISO datetime
 }
 
 // Estado de Cita
@@ -142,6 +174,8 @@ export interface Cita {
   pacienteId: string;
   pacienteNombre: string;
   pacienteCedula: string;
+  beneficiaryId?: string;
+  beneficiary?: Beneficiario;
   medicoId: string;
   medicoNombre: string;
   especialidad: string;
@@ -170,7 +204,7 @@ export interface Reposo {
   empleadoId: string;
   empleadoNombre: string;
   fechaInicio: string; // YYYY-MM-DD
-  fechaFin: string;    // YYYY-MM-DD
+  fechaFin: string; // YYYY-MM-DD
   dias: number;
   diagnostico: string;
   medicoTratante: string;

@@ -19,5 +19,7 @@ Thumbs.db
 .env.*.local
 .env.production
 
+DIAGNOSTICO_INTEGRAL_SALUDMERCAL.md
+
 # Logs generales
 *.log

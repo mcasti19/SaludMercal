@@ -43,7 +43,7 @@ class PatientSeeder extends Seeder
             ]
         );
 
-        Patient::updateOrCreate(
+        $patient1 = Patient::updateOrCreate(
             ['national_id' => 'V-18765432'],
             [
                 'user_id' => $empUser1->id,
@@ -63,6 +63,41 @@ class PatientSeeder extends Seeder
                 'is_active' => true,
             ]
         );
+
+        // Beneficiarios de Juan Carlos Pérez (Padres, Hijos, Cónyuge)
+        $patient1->beneficiaries()->delete();
+        $patient1->beneficiaries()->createMany([
+            [
+                'first_name' => 'Elena María',
+                'last_name' => 'Gómez de Pérez',
+                'relationship' => 'conyuge',
+                'national_id' => 'V-20123456',
+                'birth_date' => '1990-04-12',
+                'gender' => 'F',
+                'phone' => '0414-9988112',
+                'is_active' => true,
+            ],
+            [
+                'first_name' => 'Lucas Andrés',
+                'last_name' => 'Pérez Gómez',
+                'relationship' => 'hijo',
+                'national_id' => null,
+                'birth_date' => '2018-09-05',
+                'gender' => 'M',
+                'phone' => null,
+                'is_active' => true,
+            ],
+            [
+                'first_name' => 'Carmen Rosa',
+                'last_name' => 'Gómez',
+                'relationship' => 'madre',
+                'national_id' => 'V-6543210',
+                'birth_date' => '1962-02-18',
+                'gender' => 'F',
+                'phone' => '0412-9988776',
+                'is_active' => true,
+            ],
+        ]);
 
         // 2. Secondary Test Employee: María González (maria.gonzalez / maria.gonzalez@mercal.gob.ve)
         $empUser2 = User::updateOrCreate(

@@ -1,15 +1,15 @@
 "use client";
 
-import { create } from "zustand";
-import { Cita, CitaEstado } from "@/types";
 import {
-  apiGetAppointments,
+  ApiAppointment,
   apiCreateAppointment,
+  apiDeleteAppointment,
+  apiGetAppointments,
   apiRescheduleAppointment,
   apiTransitionAppointment,
-  apiDeleteAppointment,
-  ApiAppointment,
 } from "@/lib/api";
+import { Cita, CitaEstado } from "@/types";
+import { create } from "zustand";
 
 const STATUS_API_TO_UI: Record<string, CitaEstado> = {
   pending: "PENDIENTE",
@@ -55,6 +55,24 @@ export function mapApiAppointment(a: ApiAppointment): Cita {
     especialidad: specialtyName,
     fecha: a.scheduled_date,
     hora: a.start_time.slice(0, 5),
+    beneficiaryId: a.beneficiary_id ? String(a.beneficiary_id) : undefined,
+    beneficiary: a.beneficiary
+      ? {
+          id: a.beneficiary.id,
+          patient_id: a.beneficiary.patient_id,
+          first_name: a.beneficiary.first_name,
+          last_name: a.beneficiary.last_name,
+          full_name: a.beneficiary.full_name,
+          relationship: a.beneficiary
+            .relationship as import("@/types").ParentescoBeneficiario,
+          relationship_label: a.beneficiary.relationship_label,
+          national_id: a.beneficiary.national_id,
+          birth_date: a.beneficiary.birth_date,
+          gender: a.beneficiary.gender,
+          phone: a.beneficiary.phone,
+          is_active: a.beneficiary.is_active,
+        }
+      : undefined,
     estado: STATUS_API_TO_UI[a.status] ?? "PENDIENTE",
     motivo: a.reason,
     notas: a.notes ?? undefined,
@@ -70,10 +88,18 @@ interface CitasState {
   filterEstado: CitaEstado | "TODAS";
   setSearch: (search: string) => void;
   setFilterEstado: (estado: CitaEstado | "TODAS") => void;
-  fetchCitas: (filters?: { status?: string; date?: string; search?: string }) => Promise<void>;
+  fetchCitas: (filters?: {
+    status?: string;
+    date?: string;
+    search?: string;
+  }) => Promise<void>;
   addCita: (data: Omit<Cita, "id" | "creadoEn">) => Promise<boolean>;
   updateCita: (id: string, data: Partial<Cita>) => Promise<boolean>;
-  updateEstado: (id: string, estado: CitaEstado, comment?: string) => Promise<boolean>;
+  updateEstado: (
+    id: string,
+    estado: CitaEstado,
+    comment?: string,
+  ) => Promise<boolean>;
   deleteCita: (id: string) => Promise<boolean>;
   getCitasHoy: () => Cita[];
   getCitasByPaciente: (pacienteId: string) => Cita[];
@@ -106,10 +132,11 @@ export const useCitasStore = create<CitasState>()((set, get) => ({
         filters?.status !== undefined
           ? filters.status
           : currentFilter !== "TODAS"
-          ? STATUS_UI_TO_API[currentFilter]
-          : undefined;
+            ? STATUS_UI_TO_API[currentFilter]
+            : undefined;
 
-      const search = filters?.search !== undefined ? filters.search : get().search;
+      const search =
+        filters?.search !== undefined ? filters.search : get().search;
 
       const apiList = await apiGetAppointments({
         status,
@@ -123,7 +150,8 @@ export const useCitasStore = create<CitasState>()((set, get) => ({
         error: null,
       });
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Error al cargar citas";
+      const message =
+        err instanceof Error ? err.message : "Error al cargar citas";
       set({ isLoading: false, error: message });
     }
   },
@@ -131,11 +159,17 @@ export const useCitasStore = create<CitasState>()((set, get) => ({
   addCita: async (data) => {
     set({ isLoading: true, error: null });
     try {
-      const patientId = data.pacienteId ? parseInt(data.pacienteId, 10) : undefined;
+      const patientId = data.pacienteId
+        ? parseInt(data.pacienteId, 10)
+        : undefined;
+      const beneficiaryId = data.beneficiaryId
+        ? parseInt(data.beneficiaryId, 10)
+        : undefined;
       const doctorId = parseInt(data.medicoId, 10);
 
       const created = await apiCreateAppointment({
         patient_id: isNaN(patientId as number) ? null : patientId,
+        beneficiary_id: isNaN(beneficiaryId as number) ? null : beneficiaryId,
         doctor_id: isNaN(doctorId) ? 1 : doctorId,
         scheduled_date: data.fecha,
         start_time: data.hora,
@@ -150,7 +184,8 @@ export const useCitasStore = create<CitasState>()((set, get) => ({
       }));
       return true;
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Error al reservar cita";
+      const message =
+        err instanceof Error ? err.message : "Error al reservar cita";
       set({ isLoading: false, error: message });
       return false;
     }
@@ -189,7 +224,8 @@ export const useCitasStore = create<CitasState>()((set, get) => ({
       }
       return true;
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Error al actualizar cita";
+      const message =
+        err instanceof Error ? err.message : "Error al actualizar cita";
       set({ isLoading: false, error: message });
       return false;
     }
@@ -211,7 +247,8 @@ export const useCitasStore = create<CitasState>()((set, get) => ({
       }));
       return true;
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Error al cambiar estado";
+      const message =
+        err instanceof Error ? err.message : "Error al cambiar estado";
       set({ isLoading: false, error: message });
       return false;
     }
@@ -227,7 +264,8 @@ export const useCitasStore = create<CitasState>()((set, get) => ({
       }));
       return true;
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Error al eliminar cita";
+      const message =
+        err instanceof Error ? err.message : "Error al eliminar cita";
       set({ isLoading: false, error: message });
       return false;
     }

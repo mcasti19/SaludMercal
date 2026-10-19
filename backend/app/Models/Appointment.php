@@ -19,7 +19,7 @@ class Appointment extends Model
     use Auditable, BelongsToLocation, HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'code', 'patient_id', 'doctor_id', 'specialty_id', 'location_id', 'scheduled_date',
+        'code', 'patient_id', 'beneficiary_id', 'doctor_id', 'specialty_id', 'location_id', 'scheduled_date',
         'start_time', 'end_time', 'status', 'reason', 'notes', 'cancellation_reason',
         'created_by', 'cancelled_by', 'confirmed_at', 'started_at', 'completed_at', 'cancelled_at',
     ];
@@ -46,6 +46,11 @@ class Appointment extends Model
     public function patient(): BelongsTo
     {
         return $this->belongsTo(Patient::class);
+    }
+
+    public function beneficiary(): BelongsTo
+    {
+        return $this->belongsTo(PatientBeneficiary::class, 'beneficiary_id');
     }
 
     public function doctor(): BelongsTo

@@ -68,6 +68,11 @@ class Patient extends Model
         return $this->hasMany(MedicalExam::class);
     }
 
+    public function beneficiaries(): HasMany
+    {
+        return $this->hasMany(PatientBeneficiary::class);
+    }
+
     public function scopeSearch(Builder $query, ?string $term): Builder
     {
         return $query->searchColumns($term, ['national_id', 'first_name', 'last_name', 'email']);

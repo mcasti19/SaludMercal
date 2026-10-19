@@ -13,6 +13,7 @@ return new class extends Migration
             $table->id();
             $table->string('code', 30)->unique();
             $table->foreignId('patient_id')->constrained()->restrictOnDelete();
+            $table->foreignId('beneficiary_id')->nullable()->constrained('patient_beneficiaries')->nullOnDelete();
             $table->foreignId('doctor_id')->constrained()->restrictOnDelete();
             $table->foreignId('specialty_id')->constrained()->restrictOnDelete();
             $table->foreignId('location_id')->nullable()->constrained()->nullOnDelete();

@@ -1,19 +1,19 @@
 "use client";
 
-import { create } from "zustand";
-import { Paciente } from "@/types";
 import {
-  apiGetPatients,
-  apiGetPatient,
+  ApiCatalogItem,
   apiCreatePatient,
-  apiUpdatePatient,
   apiDeletePatient,
   apiGetDepartments,
+  apiGetPatient,
+  apiGetPatients,
   ApiPatient,
-  ApiCatalogItem,
+  apiUpdatePatient,
 } from "@/lib/api";
 import { mapApiAppointment } from "@/modules/citas/citas.store";
 import { mapApiMedicalLeave } from "@/modules/reposos/reposos.store";
+import { Paciente } from "@/types";
+import { create } from "zustand";
 
 export function mapApiPatient(p: ApiPatient): Paciente {
   return {
@@ -26,19 +26,39 @@ export function mapApiPatient(p: ApiPatient): Paciente {
     email: p.email ?? "",
     fechaNacimiento: p.birth_date,
     estado: p.is_active ? "ACTIVO" : "INACTIVO",
-    location: p.location ? {
-      id: String(p.location.id),
-      name: p.location.name,
-      state: p.location.state ?? undefined,
-      is_headquarters: Boolean(p.location.is_headquarters),
-    } : undefined,
-    sede: p.location?.name ?? (p.location_id ? `Sede #${p.location_id}` : undefined),
+    location: p.location
+      ? {
+          id: String(p.location.id),
+          name: p.location.name,
+          state: p.location.state ?? undefined,
+          is_headquarters: Boolean(p.location.is_headquarters),
+        }
+      : undefined,
+    sede:
+      p.location?.name ??
+      (p.location_id ? `Sede #${p.location_id}` : undefined),
     isHeadquarters: Boolean(p.location?.is_headquarters),
     cargo: p.job_title ?? undefined,
     grupoSanguineo: p.blood_type ?? undefined,
     alergias: p.allergies ?? undefined,
     contactoEmergenciaNombre: p.emergency_contact_name ?? undefined,
     contactoEmergenciaTelefono: p.emergency_contact_phone ?? undefined,
+    beneficiaries:
+      p.beneficiaries?.map((b) => ({
+        id: b.id,
+        patient_id: b.patient_id,
+        first_name: b.first_name,
+        last_name: b.last_name,
+        full_name: b.full_name,
+        relationship:
+          b.relationship as import("@/types").ParentescoBeneficiario,
+        relationship_label: b.relationship_label,
+        national_id: b.national_id,
+        birth_date: b.birth_date,
+        gender: b.gender,
+        phone: b.phone,
+        is_active: b.is_active,
+      })) ?? [],
     appointments: p.appointments?.map(mapApiAppointment),
     medical_leaves: p.medical_leaves?.map(mapApiMedicalLeave),
   };
@@ -93,7 +113,8 @@ export const usePacientesStore = create<PacientesState>()((set, get) => ({
         error: null,
       });
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Error al cargar pacientes";
+      const message =
+        err instanceof Error ? err.message : "Error al cargar pacientes";
       set({ isLoading: false, error: message });
     }
   },
@@ -106,7 +127,10 @@ export const usePacientesStore = create<PacientesState>()((set, get) => ({
       set({ currentPaciente: mapped, isLoading: false, error: null });
       return mapped;
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Error al cargar datos del paciente";
+      const message =
+        err instanceof Error
+          ? err.message
+          : "Error al cargar datos del paciente";
       set({ isLoading: false, error: message, currentPaciente: null });
       return null;
     }
@@ -117,7 +141,7 @@ export const usePacientesStore = create<PacientesState>()((set, get) => ({
     try {
       // Buscar departamento por nombre si existe en el catálogo
       const depObj = get().departments.find(
-        (d) => d.name.toLowerCase() === data.departamento.toLowerCase()
+        (d) => d.name.toLowerCase() === data.departamento.toLowerCase(),
       );
 
       const created = await apiCreatePatient({
@@ -139,7 +163,8 @@ export const usePacientesStore = create<PacientesState>()((set, get) => ({
       }));
       return true;
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Error al crear paciente";
+      const message =
+        err instanceof Error ? err.message : "Error al crear paciente";
       set({ isLoading: false, error: message });
       return false;
     }
@@ -150,7 +175,7 @@ export const usePacientesStore = create<PacientesState>()((set, get) => ({
     try {
       const depObj = data.departamento
         ? get().departments.find(
-            (d) => d.name.toLowerCase() === data.departamento!.toLowerCase()
+            (d) => d.name.toLowerCase() === data.departamento!.toLowerCase(),
           )
         : undefined;
 
@@ -161,19 +186,43 @@ export const usePacientesStore = create<PacientesState>()((set, get) => ({
         birth_date: data.fechaNacimiento,
         phone: data.telefono,
         email: data.email,
-        job_title: data.departamento,
+        job_title: data.cargo ?? data.departamento,
         department_id: depObj?.id,
         is_active: data.estado ? data.estado !== "INACTIVO" : undefined,
+        blood_type: data.grupoSanguineo,
+        allergies: data.alergias,
+        emergency_contact_name: data.contactoEmergenciaNombre,
+        emergency_contact_phone: data.contactoEmergenciaTelefono,
+        beneficiaries: data.beneficiaries?.map((b) => ({
+          id:
+            typeof b.id === "number"
+              ? b.id
+              : typeof b.id === "string" && !isNaN(Number(b.id))
+                ? Number(b.id)
+                : undefined,
+          first_name: b.first_name,
+          last_name: b.last_name,
+          relationship: b.relationship,
+          national_id: b.national_id || null,
+          birth_date: b.birth_date || null,
+          gender: b.gender || null,
+          phone: b.phone || null,
+          is_active: b.is_active !== false,
+          _delete: b._delete,
+        })),
       });
 
       const mapped = mapApiPatient(updated);
       set((state) => ({
         pacientes: state.pacientes.map((p) => (p.id === id ? mapped : p)),
+        currentPaciente:
+          state.currentPaciente?.id === id ? mapped : state.currentPaciente,
         isLoading: false,
       }));
       return true;
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Error al actualizar paciente";
+      const message =
+        err instanceof Error ? err.message : "Error al actualizar paciente";
       set({ isLoading: false, error: message });
       return false;
     }
@@ -189,7 +238,8 @@ export const usePacientesStore = create<PacientesState>()((set, get) => ({
       }));
       return true;
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Error al eliminar paciente";
+      const message =
+        err instanceof Error ? err.message : "Error al eliminar paciente";
       set({ isLoading: false, error: message });
       return false;
     }

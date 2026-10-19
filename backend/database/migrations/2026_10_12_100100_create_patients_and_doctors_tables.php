@@ -32,6 +32,23 @@ return new class extends Migration
             $table->index(['last_name', 'first_name']);
         });
 
+        Schema::create('patient_beneficiaries', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('patient_id')->constrained()->cascadeOnDelete();
+            $table->string('first_name', 100);
+            $table->string('last_name', 100);
+            $table->string('relationship', 30); // 'conyuge', 'hijo', 'hija', 'padre', 'madre'
+            $table->string('national_id', 20)->nullable();
+            $table->date('birth_date')->nullable();
+            $table->string('gender', 10)->nullable();
+            $table->string('phone', 30)->nullable();
+            $table->boolean('is_active')->default(true);
+            $table->timestamps();
+            $table->softDeletes();
+
+            $table->index(['patient_id', 'is_active']);
+        });
+
         Schema::create('doctors', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->nullable()->unique()->constrained()->nullOnDelete();
@@ -90,6 +107,7 @@ return new class extends Migration
         Schema::dropIfExists('doctor_schedules');
         Schema::dropIfExists('doctor_specialty');
         Schema::dropIfExists('doctors');
+        Schema::dropIfExists('patient_beneficiaries');
         Schema::dropIfExists('patients');
     }
 };

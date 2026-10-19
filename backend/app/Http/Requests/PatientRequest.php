@@ -46,6 +46,17 @@ class PatientRequest extends FormRequest
             'emergency_contact_name' => ['nullable', 'string', 'max:255'],
             'emergency_contact_phone' => ['nullable', 'string', 'max:30'],
             'is_active' => ['sometimes', 'boolean'],
+            'beneficiaries' => ['nullable', 'array'],
+            'beneficiaries.*.id' => ['nullable', 'integer'],
+            'beneficiaries.*.first_name' => ['required_with:beneficiaries', 'string', 'max:100'],
+            'beneficiaries.*.last_name' => ['required_with:beneficiaries', 'string', 'max:100'],
+            'beneficiaries.*.relationship' => ['required_with:beneficiaries', 'string', 'max:30'],
+            'beneficiaries.*.national_id' => ['nullable', 'string', 'max:20'],
+            'beneficiaries.*.birth_date' => ['nullable', 'date'],
+            'beneficiaries.*.gender' => ['nullable', 'string', 'max:10'],
+            'beneficiaries.*.phone' => ['nullable', 'string', 'max:30'],
+            'beneficiaries.*.is_active' => ['nullable', 'boolean'],
+            'beneficiaries.*._delete' => ['nullable', 'boolean'],
         ];
     }
 

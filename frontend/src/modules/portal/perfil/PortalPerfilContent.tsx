@@ -1,228 +1,264 @@
 "use client";
 
-import { useState } from "react";
+import { apiGetMyPatient, ApiPatient } from "@/lib/api";
 import { useAuthStore } from "@/modules/auth/auth.store";
-import { User, Mail, Phone, MapPin, Briefcase, KeyRound, ShieldCheck, CreditCard } from "lucide-react";
+import {
+  Droplet,
+  HeartPulse,
+  Info,
+  Loader2,
+  Phone,
+  ShieldCheck,
+  Users,
+} from "lucide-react";
+import { useEffect, useState } from "react";
+
+const RELATIONSHIP_LABELS: Record<string, string> = {
+  conyuge: "Cónyuge",
+  hijo: "Hijo",
+  hija: "Hija",
+  padre: "Padre",
+  madre: "Madre",
+};
 
 export function PortalPerfilContent() {
   const { user } = useAuthStore();
-  const [isEditing, setIsEditing] = useState(false);
+  const [patientData, setPatientData] = useState<ApiPatient | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  // Simulated extra data for MVP aesthetics
-  const extraData = {
-    telefono: "+58 412-1234567",
-    direccion: "Av. Universidad, Edificio Centro Valores, Caracas, Distrito Capital",
-    fechaIngreso: "15/03/2018",
-    cargo: "Analista de Operaciones",
-    tipoSangre: "O+",
-    contactoEmergencia: "María Pérez (Madre) - 0414-9876543",
-  };
+  useEffect(() => {
+    let isMounted = true;
+    apiGetMyPatient()
+      .then((data) => {
+        if (isMounted) setPatientData(data);
+      })
+      .catch(() => {
+        // En caso de que no tenga aún registro
+      })
+      .finally(() => {
+        if (isMounted) setLoading(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const beneficiaries = patientData?.beneficiaries ?? [];
 
   return (
-    <div className="p-6 space-y-6 max-w-4xl mx-auto">
+    <div className="p-6 space-y-6 max-w-5xl mx-auto">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-slate-900 dark:text-white text-2xl font-bold">Mi Perfil</h1>
+          <h1 className="text-slate-900 dark:text-white text-2xl font-bold">
+            Mi Perfil y Ficha Técnica
+          </h1>
           <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
-            Gestione su información personal y de contacto
+            Información laboral, médica y grupo familiar directo de Mercal
           </p>
         </div>
-        <button
-          onClick={() => setIsEditing(!isEditing)}
-          className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
-            isEditing
-              ? "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
-              : "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20 hover:bg-emerald-100 dark:hover:bg-emerald-500/20"
-          }`}
-        >
-          {isEditing ? "Cancelar Edición" : "Editar Información"}
-        </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Left Column: Avatar & Basic Info */}
-        <div className="md:col-span-1 space-y-6">
-          <div className="bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 rounded-2xl p-6 text-center">
-            <div className="w-24 h-24 bg-gradient-to-br from-emerald-400 to-teal-500 text-white rounded-full flex items-center justify-center font-bold text-3xl mx-auto shadow-lg shadow-emerald-500/30 mb-4 ring-4 ring-emerald-50 dark:ring-emerald-900/30">
-              {user?.nombre?.[0]}{user?.apellido?.[0]}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Columna Izquierda: Tarjeta de Identidad */}
+        <div className="lg:col-span-1 space-y-6">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 text-center shadow-sm">
+            <div className="w-24 h-24 bg-gradient-to-br from-emerald-500 to-teal-600 text-white rounded-3xl flex items-center justify-center font-bold text-3xl mx-auto shadow-lg shadow-emerald-500/25 mb-4">
+              {user?.nombre?.[0]}
+              {user?.apellido?.[0]}
             </div>
             <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-1">
               {user?.nombre} {user?.apellido}
             </h2>
-            <p className="text-emerald-600 dark:text-emerald-400 text-sm font-medium mb-4">
-              {extraData.cargo}
+            <p className="text-emerald-600 dark:text-emerald-400 text-sm font-medium mb-3">
+              {patientData?.job_title ??
+                user?.departamento ??
+                "Trabajador Mercal"}
             </p>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs font-medium">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
-              Cuenta Verificada
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-semibold border border-emerald-500/20">
+              <ShieldCheck className="w-3.5 h-3.5" />
+              Titular Activo Mercal
+            </div>
+
+            <div className="mt-6 pt-6 border-t border-slate-100 dark:border-slate-800/80 text-left space-y-3 text-xs">
+              <div className="flex justify-between items-center text-slate-500 dark:text-slate-400">
+                <span>Cédula:</span>
+                <span className="font-mono font-semibold text-slate-800 dark:text-slate-200">
+                  {user?.cedula || patientData?.national_id || "V-18765432"}
+                </span>
+              </div>
+              <div className="flex justify-between items-center text-slate-500 dark:text-slate-400">
+                <span>Sede:</span>
+                <span className="font-semibold text-slate-800 dark:text-slate-200">
+                  {patientData?.location?.name ?? "Sede Central Caracas"}
+                </span>
+              </div>
+              <div className="flex justify-between items-center text-slate-500 dark:text-slate-400">
+                <span>Departamento:</span>
+                <span className="font-semibold text-slate-800 dark:text-slate-200 truncate max-w-[170px]">
+                  {patientData?.department?.name ?? user?.departamento}
+                </span>
+              </div>
             </div>
           </div>
 
-          {/* Quick Actions */}
-          <div className="bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 rounded-2xl p-4">
-            <button className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/80 text-slate-700 dark:text-slate-300 transition-colors group">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-blue-50 dark:bg-blue-500/10 text-blue-500">
-                  <KeyRound className="w-4 h-4" />
-                </div>
-                <span className="text-sm font-medium">Cambiar Contraseña</span>
+          {/* Ficha Médica Resumida */}
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm space-y-4">
+            <div className="flex items-center gap-2 text-rose-500 font-bold text-sm uppercase tracking-wider">
+              <HeartPulse className="w-4 h-4" />
+              <span>Ficha Médica</span>
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">
+                  Grupo Sanguíneo
+                </span>
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-rose-500/10 border border-rose-500/25 text-rose-500 dark:text-rose-400 font-bold text-sm">
+                  <Droplet className="w-3.5 h-3.5" />
+                  {patientData?.blood_type || "O+"}
+                </span>
               </div>
-            </button>
-            <div className="h-px bg-slate-100 dark:bg-slate-700/50 my-1 mx-2" />
-            <button className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/80 text-slate-700 dark:text-slate-300 transition-colors">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-amber-50 dark:bg-amber-500/10 text-amber-500">
-                  <CreditCard className="w-4 h-4" />
-                </div>
-                <span className="text-sm font-medium">Credencial Digital</span>
+
+              <div>
+                <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">
+                  Alergias Conocidas
+                </span>
+                <p className="text-xs text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl border border-slate-200/60 dark:border-slate-800">
+                  {patientData?.allergies || "Sin alergias registradas"}
+                </p>
               </div>
-            </button>
+
+              <div>
+                <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">
+                  Contacto de Emergencia
+                </span>
+                <div className="text-xs text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl border border-slate-200/60 dark:border-slate-800 space-y-1">
+                  <p className="font-semibold text-slate-900 dark:text-white">
+                    {patientData?.emergency_contact_name ||
+                      "Carmen Gómez (Madre)"}
+                  </p>
+                  <p className="text-slate-500 dark:text-slate-400 flex items-center gap-1 font-mono">
+                    <Phone className="w-3 h-3" />
+                    {patientData?.emergency_contact_phone || "0412-9988776"}
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Right Column: Detailed Forms */}
-        <div className="md:col-span-2 space-y-6">
-          {/* Datos Personales */}
-          <div className="bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 rounded-2xl overflow-hidden">
-            <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 flex items-center gap-2">
-              <User className="w-4 h-4 text-emerald-500" />
-              <h3 className="font-semibold text-slate-800 dark:text-slate-200">Información Personal</h3>
-            </div>
-            <div className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">
-                  Cédula de Identidad
-                </label>
-                <input
-                  type="text"
-                  disabled
-                  value={user?.cedula}
-                  className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-sm opacity-80 cursor-not-allowed"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">
-                  Correo Electrónico
-                </label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                  <input
-                    type="email"
-                    disabled={!isEditing}
-                    defaultValue={user?.email}
-                    className={`w-full pl-9 pr-3 py-2 rounded-lg border text-sm transition-colors ${
-                      isEditing
-                        ? "bg-white dark:bg-slate-900 border-emerald-200 dark:border-emerald-500/30 text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500/20"
-                        : "bg-slate-50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 opacity-80"
-                    }`}
-                  />
+        {/* Columna Derecha: Beneficiarios Familiares */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Tarjeta de Beneficiarios (Familiares Directos) */}
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-7 shadow-sm space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-500">
+                  <Users className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-slate-900 dark:text-white font-bold text-lg">
+                    Mi Grupo Familiar (Beneficiarios)
+                  </h3>
+                  <p className="text-slate-500 dark:text-slate-400 text-xs mt-0.5">
+                    Extensión del beneficio institucional para atención médica
+                  </p>
                 </div>
               </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">
-                  Teléfono
-                </label>
-                <div className="relative">
-                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                  <input
-                    type="tel"
-                    disabled={!isEditing}
-                    defaultValue={extraData.telefono}
-                    className={`w-full pl-9 pr-3 py-2 rounded-lg border text-sm transition-colors ${
-                      isEditing
-                        ? "bg-white dark:bg-slate-900 border-emerald-200 dark:border-emerald-500/30 text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500/20"
-                        : "bg-slate-50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 opacity-80"
-                    }`}
-                  />
-                </div>
-              </div>
-              <div className="sm:col-span-2">
-                <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">
-                  Dirección de Habitación
-                </label>
-                <div className="relative">
-                  <MapPin className="absolute left-3 top-3 w-4 h-4 text-slate-400" />
-                  <textarea
-                    disabled={!isEditing}
-                    defaultValue={extraData.direccion}
-                    rows={2}
-                    className={`w-full pl-9 pr-3 py-2 rounded-lg border text-sm transition-colors resize-none ${
-                      isEditing
-                        ? "bg-white dark:bg-slate-900 border-emerald-200 dark:border-emerald-500/30 text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500/20"
-                        : "bg-slate-50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 opacity-80"
-                    }`}
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
 
-          {/* Datos Laborales & Médicos */}
-          <div className="bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 rounded-2xl overflow-hidden">
-            <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 flex items-center gap-2">
-              <Briefcase className="w-4 h-4 text-emerald-500" />
-              <h3 className="font-semibold text-slate-800 dark:text-slate-200">Datos Institucionales & Médicos</h3>
+              <span className="px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-500/25 text-emerald-600 dark:text-emerald-400 text-xs font-bold self-start sm:self-auto">
+                {beneficiaries.length}{" "}
+                {beneficiaries.length === 1 ? "Familiar" : "Familiares"}
+              </span>
             </div>
-            <div className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">
-                  Departamento
-                </label>
-                <p className="text-sm font-medium text-slate-900 dark:text-white">{user?.departamento}</p>
+
+            {/* Aviso informativo */}
+            <div className="p-4 rounded-2xl bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs flex items-start gap-3">
+              <Info className="w-4 h-4 mt-0.5 shrink-0" />
+              <p className="leading-relaxed">
+                Este listado corresponde a sus familiares directos (Padres,
+                Hijos y Cónyuge) con cobertura médica institucional. Si requiere
+                incorporar o modificar beneficiarios, comuníquese con la
+                Coordinación de Talento Humano o Recepción Médica de su sede.
+              </p>
+            </div>
+
+            {loading ? (
+              <div className="py-12 flex items-center justify-center text-slate-400 text-sm gap-2">
+                <Loader2 className="w-5 h-5 animate-spin text-emerald-500" />
+                Cargando grupo familiar...
               </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">
-                  Fecha de Ingreso
-                </label>
-                <p className="text-sm font-medium text-slate-900 dark:text-white">{extraData.fechaIngreso}</p>
-              </div>
-              <div className="h-px bg-slate-100 dark:bg-slate-700/50 sm:col-span-2 my-1" />
-              <div>
-                <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">
-                  Tipo de Sangre
-                </label>
-                <p className="text-sm font-bold text-red-500 dark:text-red-400 bg-red-50 dark:bg-red-500/10 w-max px-2.5 py-0.5 rounded-md border border-red-100 dark:border-red-500/20">
-                  {extraData.tipoSangre}
+            ) : beneficiaries.length === 0 ? (
+              <div className="py-12 text-center rounded-2xl border border-dashed border-slate-200 dark:border-slate-800">
+                <Users className="w-10 h-10 text-slate-400 dark:text-slate-600 mx-auto mb-2" />
+                <p className="text-slate-600 dark:text-slate-400 text-sm font-semibold">
+                  No hay familiares directos registrados aún
+                </p>
+                <p className="text-slate-400 text-xs max-w-sm mx-auto mt-1">
+                  Solicite en la recepción médica de su sede el registro de sus
+                  hijos, padres o cónyuge para poder agendar citas a su nombre.
                 </p>
               </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">
-                  Contacto de Emergencia
-                </label>
-                <input
-                  type="text"
-                  disabled={!isEditing}
-                  defaultValue={extraData.contactoEmergencia}
-                  className={`w-full px-3 py-2 rounded-lg border text-sm transition-colors ${
-                    isEditing
-                      ? "bg-white dark:bg-slate-900 border-emerald-200 dark:border-emerald-500/30 text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500/20"
-                      : "bg-transparent border-transparent text-slate-900 dark:text-white font-medium p-0"
-                  }`}
-                />
-              </div>
-            </div>
-          </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {beneficiaries.map((b) => {
+                  const label =
+                    RELATIONSHIP_LABELS[b.relationship.toLowerCase()] ??
+                    b.relationship_label ??
+                    b.relationship;
 
-          {isEditing && (
-            <div className="flex justify-end gap-3 mt-6">
-              <button
-                onClick={() => setIsEditing(false)}
-                className="px-5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={() => {
-                  // Simulate save
-                  setIsEditing(false);
-                }}
-                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white text-sm font-semibold shadow-md shadow-emerald-500/20 transition-all"
-              >
-                Guardar Cambios
-              </button>
-            </div>
-          )}
+                  const badgeColor =
+                    b.relationship.toLowerCase() === "conyuge"
+                      ? "bg-purple-500/10 text-purple-400 border-purple-500/25"
+                      : b.relationship.toLowerCase() === "hijo" ||
+                          b.relationship.toLowerCase() === "hija"
+                        ? "bg-sky-500/10 text-sky-400 border-sky-500/25"
+                        : "bg-amber-500/10 text-amber-400 border-amber-500/25";
+
+                  return (
+                    <div
+                      key={b.id}
+                      className="p-4 rounded-2xl bg-slate-50/70 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 flex items-start gap-3.5 hover:border-slate-300 dark:hover:border-slate-700 transition-colors"
+                    >
+                      <div className="w-10 h-10 rounded-xl bg-slate-200 dark:bg-slate-800 flex items-center justify-center font-bold text-slate-700 dark:text-slate-300 text-sm shrink-0">
+                        {b.first_name[0]}
+                        {b.last_name[0]}
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${badgeColor}`}
+                          >
+                            {label}
+                          </span>
+                        </div>
+
+                        <h4 className="text-slate-900 dark:text-white font-semibold text-sm mt-1.5 truncate">
+                          {b.first_name} {b.last_name}
+                        </h4>
+
+                        <div className="mt-1 text-xs text-slate-500 dark:text-slate-400 font-mono space-y-0.5">
+                          <p>
+                            {b.national_id
+                              ? `C.I. ${b.national_id}`
+                              : "Menor de edad (Sin cédula)"}
+                          </p>
+                          {b.birth_date && (
+                            <p className="font-sans text-[11px]">
+                              Nacimiento: {b.birth_date}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

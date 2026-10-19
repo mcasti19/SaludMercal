@@ -22,7 +22,7 @@ class AppointmentController extends Controller
 {
     use ResolvesPatientId;
 
-    private const RELATIONS = ['patient', 'doctor.specialty', 'specialty'];
+    private const RELATIONS = ['patient', 'beneficiary', 'doctor.specialty', 'specialty'];
 
     public function __construct(private readonly AppointmentService $appointments) {}
 

@@ -76,6 +76,7 @@ class AppointmentService
             try {
                 $appointment = Appointment::create([
                     'patient_id' => $data['patient_id'],
+                    'beneficiary_id' => $data['beneficiary_id'] ?? null,
                     'doctor_id' => $doctor->id,
                     'specialty_id' => $doctor->specialty_id,
                     'location_id' => $data['location_id'] ?? $doctor->location_id,

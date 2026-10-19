@@ -1,23 +1,39 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { CitaEstadoBadge } from "@/components/shared/CitaEstadoBadge";
+import {
+  apiDownloadAppointmentPrescription,
+  downloadBlobAsFile,
+} from "@/lib/api";
+import { formatDate } from "@/lib/utils";
 import { useAuthStore } from "@/modules/auth/auth.store";
 import { useCitasStore } from "@/modules/citas/citas.store";
 import { useMedicosStore } from "@/modules/medicos/medicos.store";
-import { SolicitarCitaModal } from "./SolicitarCitaModal";
-import { CitaEstadoBadge } from "@/components/shared/CitaEstadoBadge";
-import { CalendarDays, Plus, Clock, FileText, XCircle, Loader2, AlertCircle, Download } from "lucide-react";
-import { formatDate } from "@/lib/utils";
 import { Cita } from "@/types";
-import { apiDownloadAppointmentPrescription, downloadBlobAsFile } from "@/lib/api";
+import {
+  AlertCircle,
+  CalendarDays,
+  Clock,
+  Download,
+  FileText,
+  Loader2,
+  Plus,
+  User,
+  Users,
+  XCircle,
+} from "lucide-react";
+import { useEffect, useState } from "react";
+import { SolicitarCitaModal } from "./SolicitarCitaModal";
 
 export function PortalCitasContent() {
   const { user } = useAuthStore();
   const { citas, isLoading, error, fetchCitas, updateEstado } = useCitasStore();
   const { medicos, fetchMedicos } = useMedicosStore();
   const [cancellingId, setCancellingId] = useState<string | null>(null);
-  const [downloadingPrescriptionId, setDownloadingPrescriptionId] = useState<string | null>(null);
-  
+  const [downloadingPrescriptionId, setDownloadingPrescriptionId] = useState<
+    string | null
+  >(null);
+
   const [showNuevaModal, setShowNuevaModal] = useState(false);
 
   const handleDownloadPrescription = async (cita: Cita) => {
@@ -26,7 +42,9 @@ export function PortalCitasContent() {
       const blob = await apiDownloadAppointmentPrescription(cita.id);
       downloadBlobAsFile(blob, `recipe-cita-${cita.id}.pdf`);
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Error al descargar récipe médico");
+      alert(
+        err instanceof Error ? err.message : "Error al descargar récipe médico",
+      );
     } finally {
       setDownloadingPrescriptionId(null);
     }
@@ -42,13 +60,9 @@ export function PortalCitasContent() {
     user?.role === "EMPLEADO"
       ? citas
       : citas.filter(
-          (c) =>
-            c.pacienteId === user?.patientId ||
-            c.pacienteId === user?.id
+          (c) => c.pacienteId === user?.patientId || c.pacienteId === user?.id,
         )
-  ).sort(
-    (a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime()
-  );
+  ).sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime());
 
   const handleCancelarCita = async (cita: Cita) => {
     if (confirm("¿Estás seguro de que deseas cancelar esta cita?")) {
@@ -66,7 +80,9 @@ export function PortalCitasContent() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-slate-900 dark:text-white text-2xl font-bold">Mis Citas Médicas</h1>
+          <h1 className="text-slate-900 dark:text-white text-2xl font-bold">
+            Mis Citas Médicas
+          </h1>
           <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
             Gestione sus citas con nuestros especialistas
           </p>
@@ -107,16 +123,20 @@ export function PortalCitasContent() {
           <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 rounded-full flex items-center justify-center mx-auto mb-4">
             <CalendarDays className="w-8 h-8" />
           </div>
-          <h3 className="text-slate-900 dark:text-white font-semibold mb-1">No tienes citas agendadas</h3>
+          <h3 className="text-slate-900 dark:text-white font-semibold mb-1">
+            No tienes citas agendadas
+          </h3>
           <p className="text-slate-500 dark:text-slate-400 text-sm max-w-sm mx-auto">
-            Puedes solicitar una nueva cita médica en cualquier momento para ser atendido.
+            Puedes solicitar una nueva cita médica en cualquier momento para ser
+            atendido.
           </p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {misCitas.map((cita) => {
             const medico = medicos.find((m) => m.id === cita.medicoId);
-            const isPendingOrConfirmed = cita.estado === "PENDIENTE" || cita.estado === "CONFIRMADA";
+            const isPendingOrConfirmed =
+              cita.estado === "PENDIENTE" || cita.estado === "CONFIRMADA";
 
             return (
               <div
@@ -127,7 +147,7 @@ export function PortalCitasContent() {
                   <div className="flex items-start justify-between mb-4">
                     <CitaEstadoBadge estado={cita.estado} />
                     {isPendingOrConfirmed && (
-                      <button 
+                      <button
                         onClick={() => handleCancelarCita(cita)}
                         disabled={cancellingId === cita.id}
                         className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors disabled:opacity-50"
@@ -141,12 +161,34 @@ export function PortalCitasContent() {
                       </button>
                     )}
                   </div>
-                  
+
+                  {cita.beneficiary ? (
+                    <div className="flex items-center gap-1.5 mb-2.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-2.5 py-1 rounded-xl w-max border border-emerald-500/20">
+                      <Users className="w-3.5 h-3.5" />
+                      <span>
+                        Para: {cita.beneficiary.first_name}{" "}
+                        {cita.beneficiary.last_name} (
+                        {cita.beneficiary.relationship_label ??
+                          cita.beneficiary.relationship}
+                        )
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1.5 mb-2.5 text-xs font-medium text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800/60 px-2.5 py-1 rounded-xl w-max border border-slate-200 dark:border-slate-700/60">
+                      <User className="w-3.5 h-3.5" />
+                      <span>Para: Titular</span>
+                    </div>
+                  )}
+
                   <h3 className="text-slate-900 dark:text-white font-semibold text-lg leading-tight mb-1">
-                    {medico ? `Dr. ${medico.nombre} ${medico.apellido}` : cita.medicoNombre}
+                    {medico
+                      ? `Dr. ${medico.nombre} ${medico.apellido}`
+                      : cita.medicoNombre}
                   </h3>
                   <p className="text-emerald-600 dark:text-emerald-400 text-sm font-medium mb-4">
-                    {medico?.especialidadNombre || cita.especialidad || "Especialidad"}
+                    {medico?.especialidadNombre ||
+                      cita.especialidad ||
+                      "Especialidad"}
                   </p>
 
                   <div className="space-y-2 mb-4">
@@ -170,7 +212,7 @@ export function PortalCitasContent() {
                     Esperando confirmación de recepción
                   </div>
                 )}
-                
+
                 {cita.estado === "COMPLETADA" && (
                   <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800/60 flex justify-end">
                     <button
@@ -193,7 +235,10 @@ export function PortalCitasContent() {
         </div>
       )}
 
-      <SolicitarCitaModal open={showNuevaModal} onClose={() => setShowNuevaModal(false)} />
+      <SolicitarCitaModal
+        open={showNuevaModal}
+        onClose={() => setShowNuevaModal(false)}
+      />
     </div>
   );
 }

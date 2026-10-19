@@ -6,17 +6,109 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Activity,
   AlertCircle,
+  Building2,
+  ClipboardList,
+  Crown,
   Eye,
   EyeOff,
   HeartPulse,
   Lock,
+  MapPin,
   ShieldCheck,
+  Stethoscope,
   User,
+  UserCheck,
+  Zap,
 } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
+
+interface QuickRoleItem {
+  role: string;
+  label: string;
+  username: string;
+  detail: string;
+  icon: React.ComponentType<{ className?: string }>;
+  badgeBg: string;
+  hoverBorder: string;
+}
+
+const QUICK_ROLES: QuickRoleItem[] = [
+  {
+    role: "super_admin",
+    label: "SuperAdmin",
+    username: "moicastillo",
+    detail: "Moisés C. · Nacional",
+    icon: Crown,
+    badgeBg: "bg-amber-500/10 border-amber-500/25 text-amber-300",
+    hoverBorder: "hover:border-amber-500/40 hover:bg-amber-500/5",
+  },
+  {
+    role: "admin_central",
+    label: "Admin Central",
+    username: "admin",
+    detail: "Sede Central Caracas",
+    icon: Building2,
+    badgeBg: "bg-blue-500/10 border-blue-500/25 text-blue-300",
+    hoverBorder: "hover:border-blue-500/40 hover:bg-blue-500/5",
+  },
+  {
+    role: "admin_regional",
+    label: "Admin Estado",
+    username: "admin.zulia",
+    detail: "Coordinación Zulia",
+    icon: MapPin,
+    badgeBg: "bg-sky-500/10 border-sky-500/25 text-sky-300",
+    hoverBorder: "hover:border-sky-500/40 hover:bg-sky-500/5",
+  },
+  {
+    role: "logical_security",
+    label: "Seg. Lógica",
+    username: "seguridad.logica",
+    detail: "División OTIC (IAM)",
+    icon: ShieldCheck,
+    badgeBg: "bg-purple-500/10 border-purple-500/25 text-purple-300",
+    hoverBorder: "hover:border-purple-500/40 hover:bg-purple-500/5",
+  },
+  {
+    role: "doctor",
+    label: "Médico",
+    username: "carlos.mendoza",
+    detail: "Dr. Carlos Mendoza",
+    icon: Stethoscope,
+    badgeBg: "bg-emerald-500/10 border-emerald-500/25 text-emerald-300",
+    hoverBorder: "hover:border-emerald-500/40 hover:bg-emerald-500/5",
+  },
+  {
+    role: "nurse",
+    label: "Enfermería",
+    username: "enfermeria",
+    detail: "Lic. Mariana Gómez",
+    icon: HeartPulse,
+    badgeBg: "bg-rose-500/10 border-rose-500/25 text-rose-300",
+    hoverBorder: "hover:border-rose-500/40 hover:bg-rose-500/5",
+  },
+  {
+    role: "receptionist",
+    label: "Recepción",
+    username: "recepcion",
+    detail: "Triage y Citas Central",
+    icon: ClipboardList,
+    badgeBg: "bg-orange-500/10 border-orange-500/25 text-orange-300",
+    hoverBorder: "hover:border-orange-500/40 hover:bg-orange-500/5",
+  },
+  {
+    role: "employee",
+    label: "Paciente / Emp.",
+    username: "empleado",
+    detail: "Juan Carlos Pérez",
+    icon: UserCheck,
+    badgeBg: "bg-teal-500/10 border-teal-500/25 text-teal-300",
+    hoverBorder: "hover:border-teal-500/40 hover:bg-teal-500/5",
+  },
+];
 
 export default function LoginPage() {
   const router = useRouter();
@@ -40,13 +132,37 @@ export default function LoginPage() {
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors },
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: { login: "", password: "" },
   });
 
+  const [activeQuickUser, setActiveQuickUser] = useState<string | null>(null);
+
+  const handleQuickLogin = async (username: string) => {
+    const defaultPassword = "Password123*";
+    setValue("login", username, { shouldValidate: true });
+    setValue("password", defaultPassword, { shouldValidate: true });
+    setActiveQuickUser(username);
+    clearError();
+
+    const success = await login(username, defaultPassword);
+    if (success) {
+      const authUser = useAuthStore.getState().user;
+      if (authUser) {
+        router.push(getRedirectPath(authUser.role));
+      } else {
+        router.push("/");
+      }
+    } else {
+      setActiveQuickUser(null);
+    }
+  };
+
   const onSubmit = async (data: LoginFormValues) => {
+    setActiveQuickUser(null);
     const success = await login(data.login, data.password);
     if (success) {
       const user = useAuthStore.getState().user;
@@ -162,7 +278,7 @@ export default function LoginPage() {
         </div>
       </div>
       {/* ── PANEL DERECHO ── */}
-      <div className="flex-1 flex flex-col justify-center items-center bg-slate-950 relative overflow-hidden">
+      <div className="flex-1 flex flex-col justify-start lg:justify-center items-center bg-slate-950 relative overflow-y-auto py-8 sm:py-12">
         {/* Ambient light glow */}
         <div className="absolute top-1/4 right-10 w-96 h-96 rounded-full bg-blue-600/10 blur-[120px] pointer-events-none" />
         <div className="absolute bottom-10 left-10 w-80 h-80 rounded-full bg-cyan-500/10 blur-[100px] pointer-events-none" />
@@ -342,7 +458,7 @@ export default function LoginPage() {
               disabled={isLoading}
               className="w-full py-3.5 px-4 rounded-xl bg-linear-to-r from-blue-600 via-blue-500 to-cyan-500 text-white font-medium text-sm hover:brightness-110 active:scale-[0.98] transition-all duration-200 shadow-lg shadow-blue-500/25 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 focus:outline-none focus:ring-4 focus:ring-cyan-500/20"
             >
-              {isLoading ? (
+              {isLoading && !activeQuickUser ? (
                 <span className="flex items-center justify-center gap-2">
                   <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                   Autenticando...
@@ -352,6 +468,58 @@ export default function LoginPage() {
               )}
             </button>
           </form>
+
+          {/* ── ACCESOS RÁPIDOS DE DESARROLLO ── */}
+          <div className="mt-8 space-y-3">
+            <div className="relative flex items-center justify-center">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-slate-800/80" />
+              </div>
+              <div className="relative bg-slate-950 px-3 flex items-center gap-1.5 text-xs text-slate-400">
+                <Zap className="w-3.5 h-3.5 text-cyan-400" />
+                <span className="font-medium tracking-wide">Acceso Rápido por Rol</span>
+                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 font-mono">
+                  DEV
+                </span>
+              </div>
+            </div>
+
+            <p className="text-[11px] text-slate-500 text-center">
+              Haz clic en cualquier rol para ingresar automáticamente
+            </p>
+
+            <div className="grid grid-cols-2 gap-2 pt-1">
+              {QUICK_ROLES.map((r) => {
+                const Icon = r.icon;
+                const isSelectedLoading = isLoading && activeQuickUser === r.username;
+                return (
+                  <button
+                    key={r.username}
+                    type="button"
+                    disabled={isLoading}
+                    onClick={() => handleQuickLogin(r.username)}
+                    className={`group relative flex items-center gap-2.5 p-2 rounded-xl border border-slate-800/80 bg-slate-900/40 ${r.hoverBorder} transition-all duration-200 text-left cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed`}
+                  >
+                    <div className={`p-1.5 rounded-lg border shrink-0 transition-transform duration-200 group-hover:scale-105 ${r.badgeBg}`}>
+                      {isSelectedLoading ? (
+                        <span className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin block" />
+                      ) : (
+                        <Icon className="w-3.5 h-3.5" />
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-semibold text-slate-200 group-hover:text-white truncate">
+                        {r.label}
+                      </p>
+                      <p className="text-[10px] text-slate-400 group-hover:text-slate-300 truncate">
+                        {r.detail}
+                      </p>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
 
           {/* Badge Informativo */}
           <div className="mt-8 p-3.5 rounded-xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-sm">

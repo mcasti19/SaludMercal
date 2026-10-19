@@ -6,13 +6,10 @@ export const loginSchema = z.object({
     .string()
     .min(1, "El usuario o correo es obligatorio")
     .min(3, "Mínimo 3 caracteres"),
-  password: z
-    .string()
-    .min(6, "La contraseña debe tener al menos 6 caracteres"),
+  password: z.string().min(6, "La contraseña debe tener al menos 6 caracteres"),
 });
 
 export type LoginFormValues = z.infer<typeof loginSchema>;
-
 
 // ── Paciente ─────────────────────────────────────────────────────────────────
 export const pacienteSchema = z.object({
@@ -23,6 +20,7 @@ export const pacienteSchema = z.object({
   nombre: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),
   apellido: z.string().min(2, "El apellido debe tener al menos 2 caracteres"),
   departamento: z.string().min(1, "Seleccione un departamento"),
+  cargo: z.string().optional(),
   telefono: z
     .string()
     .min(1, "El teléfono es obligatorio")
@@ -30,6 +28,11 @@ export const pacienteSchema = z.object({
   email: z.string().email("Ingrese un email válido"),
   fechaNacimiento: z.string().min(1, "La fecha de nacimiento es obligatoria"),
   estado: z.enum(["ACTIVO", "INACTIVO"]),
+  grupoSanguineo: z.string().optional(),
+  alergias: z.string().optional(),
+  contactoEmergenciaNombre: z.string().optional(),
+  contactoEmergenciaTelefono: z.string().optional(),
+  beneficiaries: z.array(z.any()).optional(),
 });
 
 export type PacienteFormValues = z.infer<typeof pacienteSchema>;
@@ -37,11 +40,20 @@ export type PacienteFormValues = z.infer<typeof pacienteSchema>;
 // ── Cita ─────────────────────────────────────────────────────────────────────
 export const citaSchema = z.object({
   pacienteId: z.string().min(1, "Seleccione un paciente"),
+  beneficiaryId: z.string().optional(),
   medicoId: z.string().min(1, "Seleccione un médico"),
   fecha: z.string().min(1, "La fecha es obligatoria"),
   hora: z.string().min(1, "La hora es obligatoria"),
-  motivo: z.string().min(5, "Describa brevemente el motivo (mín. 5 caracteres)"),
-  estado: z.enum(["PENDIENTE", "CONFIRMADA", "EN_ATENCION", "COMPLETADA", "CANCELADA"]),
+  motivo: z
+    .string()
+    .min(5, "Describa brevemente el motivo (mín. 5 caracteres)"),
+  estado: z.enum([
+    "PENDIENTE",
+    "CONFIRMADA",
+    "EN_ATENCION",
+    "COMPLETADA",
+    "CANCELADA",
+  ]),
   notas: z.string().optional(),
 });
 
@@ -50,7 +62,10 @@ export type CitaFormValues = z.infer<typeof citaSchema>;
 // ── Examen médico ────────────────────────────────────────────────────────────
 export const examenSchema = z.object({
   especialidadId: z.string().min(1, "Seleccione una especialidad"),
-  titulo: z.string().min(3, "El título debe tener al menos 3 caracteres").max(150, "Máximo 150 caracteres"),
+  titulo: z
+    .string()
+    .min(3, "El título debe tener al menos 3 caracteres")
+    .max(150, "Máximo 150 caracteres"),
   fecha: z
     .string()
     .min(1, "La fecha es obligatoria")
@@ -73,8 +88,12 @@ export const medicoSchema = z.object({
     }),
   nombre: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),
   apellido: z.string().min(2, "El apellido debe tener al menos 2 caracteres"),
-  especialidadIds: z.array(z.string()).min(1, "Seleccione al menos una especialidad"),
-  diasLaborables: z.array(z.number()).min(1, "Seleccione al menos un día laborable"),
+  especialidadIds: z
+    .array(z.string())
+    .min(1, "Seleccione al menos una especialidad"),
+  diasLaborables: z
+    .array(z.number())
+    .min(1, "Seleccione al menos un día laborable"),
   turno: z.enum(["MANANA", "TARDE", "NOCTURNO"]),
   horaInicio: z.string().optional(),
   horaFin: z.string().optional(),
@@ -101,7 +120,9 @@ export type MedicoFormValues = z.infer<typeof medicoSchema>;
 export const reposoSchema = z.object({
   fechaInicio: z.string().min(1, "La fecha de inicio es obligatoria"),
   fechaFin: z.string().min(1, "La fecha de fin es obligatoria"),
-  diagnostico: z.string().min(5, "Describa brevemente el diagnóstico (mín. 5 caracteres)"),
+  diagnostico: z
+    .string()
+    .min(5, "Describa brevemente el diagnóstico (mín. 5 caracteres)"),
   medicoTratante: z.string().min(3, "Indique el médico tratante"),
   tipo: z.enum(["LABORAL", "ACCIDENTE", "ENFERMEDAD", "MATERNIDAD"]),
   adjuntoBase64: z.string().optional(),
