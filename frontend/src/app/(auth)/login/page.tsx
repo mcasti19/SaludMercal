@@ -35,6 +35,9 @@ interface QuickRoleItem {
   hoverBorder: string;
 }
 
+/** Dev-only shortcut; NODE_ENV is inlined at build time so it is stripped from production bundles. */
+const SHOW_QUICK_ACCESS = process.env.NODE_ENV !== "production";
+
 const QUICK_ROLES: QuickRoleItem[] = [
   {
     role: "super_admin",
@@ -142,6 +145,7 @@ export default function LoginPage() {
   const [activeQuickUser, setActiveQuickUser] = useState<string | null>(null);
 
   const handleQuickLogin = async (username: string) => {
+    if (!SHOW_QUICK_ACCESS) return;
     const defaultPassword = "Password123*";
     setValue("login", username, { shouldValidate: true });
     setValue("password", defaultPassword, { shouldValidate: true });
@@ -470,6 +474,7 @@ export default function LoginPage() {
           </form>
 
           {/* ── ACCESOS RÁPIDOS DE DESARROLLO ── */}
+          {SHOW_QUICK_ACCESS && (
           <div className="mt-8 space-y-3">
             <div className="relative flex items-center justify-center">
               <div className="absolute inset-0 flex items-center">
@@ -520,6 +525,7 @@ export default function LoginPage() {
               })}
             </div>
           </div>
+          )}
 
           {/* Badge Informativo */}
           <div className="mt-8 p-3.5 rounded-xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-sm">

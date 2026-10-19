@@ -44,7 +44,7 @@ class MedicalLeavePolicy
         }
 
         return $user->hasRole(UserRole::Admin, UserRole::Doctor)
-            && (is_null($user->location_id) || $user->location_id === $leave->location_id);
+            && $user->canAccessLocation($leave->location_id);
     }
 
     public function delete(User $user, MedicalLeave $leave): bool
@@ -53,7 +53,7 @@ class MedicalLeavePolicy
             return true;
         }
 
-        if ($user->isAdmin() && (is_null($user->location_id) || $user->location_id === $leave->location_id)) {
+        if ($user->isAdmin() && $user->canAccessLocation($leave->location_id)) {
             return true;
         }
 

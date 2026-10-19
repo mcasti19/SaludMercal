@@ -41,7 +41,7 @@ class MedicalExamPolicy
         }
 
         return $user->isAdmin()
-            && (is_null($user->location_id) || $user->location_id === $exam->location_id);
+            && $user->canAccessLocation($exam->location_id);
     }
 }
 

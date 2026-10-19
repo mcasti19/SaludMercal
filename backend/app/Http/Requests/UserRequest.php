@@ -17,6 +17,13 @@ class UserRequest extends FormRequest
         return $user ? $this->user()->can('update', $user) : $this->user()->can('create', User::class);
     }
 
+    private function targetIsTerritorialStaff(?User $target): bool
+    {
+        $role = UserRole::tryFrom((string) $this->input('role', $target?->role->value));
+
+        return $role !== null && $role->isStaff() && $role !== UserRole::SuperAdmin;
+    }
+
     public function rules(): array
     {
         $target = $this->route('user');
@@ -52,7 +59,13 @@ class UserRequest extends FormRequest
                 $isCreating ? 'required' : 'sometimes',
                 Rule::in($allowedRoles),
             ],
-            'location_id' => ['nullable', 'integer', 'exists:locations,id'],
+            // Territorial staff must belong to a sede, otherwise they could not be confined to one.
+            'location_id' => [
+                Rule::requiredIf(fn () => $this->user()->hasNationalUserScope() && $this->targetIsTerritorialStaff($target)),
+                'nullable',
+                'integer',
+                'exists:locations,id',
+            ],
             'is_active' => ['sometimes', 'boolean'],
             'must_change_password' => ['sometimes', 'boolean'],
             'password_expiration_months' => ['sometimes', 'integer', Rule::in([3, 6, 12])],

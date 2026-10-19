@@ -15,6 +15,7 @@ class MedicalExamFactory extends Factory
     public function definition(): array
     {
         return [
+            'location_id' => fn () => \Database\Factories\LocationFactory::defaultId(),
             'patient_id' => Patient::factory(),
             'specialty_id' => Specialty::factory(),
             'title' => fake()->randomElement(['Hematología completa', 'Electrocardiograma', 'Radiografía de tórax', 'Perfil lipídico']),

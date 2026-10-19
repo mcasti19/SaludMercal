@@ -79,7 +79,7 @@ class AppointmentService
                     'beneficiary_id' => $data['beneficiary_id'] ?? null,
                     'doctor_id' => $doctor->id,
                     'specialty_id' => $doctor->specialty_id,
-                    'location_id' => $data['location_id'] ?? $doctor->location_id,
+                    'location_id' => $doctor->location_id,
                     'scheduled_date' => $date->toDateString(),
                     'start_time' => $start,
                     'end_time' => $date->setTimeFromTimeString($start)->addMinutes($doctor->slot_duration_minutes)->format('H:i'),

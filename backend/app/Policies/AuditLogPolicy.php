@@ -7,13 +7,17 @@ use App\Models\User;
 
 class AuditLogPolicy
 {
+    /**
+     * Admins read the trail of their sede; logical security reads the IAM trail
+     * (user accounts only) nationally. Results are narrowed with AuditLog::visibleTo().
+     */
     public function viewAny(User $user): bool
     {
-        return $user->isAdmin();
+        return $user->isAdmin() || $user->isLogicalSecurity();
     }
 
     public function view(User $user, AuditLog $log): bool
     {
-        return $user->isAdmin();
+        return AuditLog::query()->visibleTo($user)->whereKey($log->getKey())->exists();
     }
 }

@@ -32,7 +32,7 @@ class AdminUserSeeder extends Seeder
             [
                 'name' => 'Moisés Castillo',
                 'username' => env('SEED_ADMIN_USERNAME', 'moicastillo'),
-                'role' => UserRole::Admin,
+                'role' => UserRole::SuperAdmin,
                 'is_active' => true,
                 'must_change_password' => app()->isProduction(),
                 'password' => $password,

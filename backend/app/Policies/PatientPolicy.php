@@ -23,7 +23,7 @@ class PatientPolicy
             return $patient->user_id === $user->id;
         }
 
-        return $user->role->isStaff() && (is_null($user->location_id) || $user->location_id === $patient->location_id);
+        return $user->role->isStaff() && $user->canAccessLocation($patient->location_id);
     }
 
     public function create(User $user): bool
@@ -38,7 +38,7 @@ class PatientPolicy
         }
 
         return $user->hasRole(UserRole::Admin, UserRole::Receptionist)
-            && (is_null($user->location_id) || $user->location_id === $patient->location_id);
+            && $user->canAccessLocation($patient->location_id);
     }
 
     public function delete(User $user, Patient $patient): bool
@@ -48,6 +48,6 @@ class PatientPolicy
         }
 
         return $user->isAdmin()
-            && (is_null($user->location_id) || $user->location_id === $patient->location_id);
+            && $user->canAccessLocation($patient->location_id);
     }
 }

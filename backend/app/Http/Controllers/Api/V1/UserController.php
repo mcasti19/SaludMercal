@@ -37,9 +37,9 @@ class UserController extends Controller
                     $q->where('location_id', $request->integer('location_id'));
                 }
             }, function ($q) use ($currentUser) {
-                if ($currentUser->location_id) {
-                    $q->where('location_id', $currentUser->location_id);
-                }
+                $currentUser->location_id !== null
+                    ? $q->where('location_id', $currentUser->location_id)
+                    : $q->whereRaw('1 = 0');
             })
             ->orderBy('name')
             ->paginate($this->perPage($request));

@@ -2,6 +2,7 @@
 
 namespace App\Models\Concerns;
 
+use App\Enums\UserRole;
 use App\Models\Location;
 use App\Models\Scopes\LocationScope;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -18,6 +19,12 @@ trait BelongsToLocation
         static::creating(function ($model) {
             if (auth()->check()) {
                 $user = auth()->user();
+
+                // Employees act across sedes (e.g. booking with a doctor of another sede):
+                // the record keeps the location chosen by the domain service.
+                if ($user->role === UserRole::Employee && $model->location_id) {
+                    return;
+                }
 
                 if (! $user->hasNationalScope() && $user->location_id) {
                     // Strictly enforce model's location matches user's location

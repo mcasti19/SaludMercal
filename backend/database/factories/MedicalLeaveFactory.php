@@ -19,6 +19,7 @@ class MedicalLeaveFactory extends Factory
         $start = now()->subDays(fake()->numberBetween(0, 5));
 
         return [
+            'location_id' => fn () => \Database\Factories\LocationFactory::defaultId(),
             'patient_id' => Patient::factory(),
             'type' => fake()->randomElement(MedicalLeaveType::cases()),
             'start_date' => $start->toDateString(),

@@ -15,6 +15,7 @@ class DoctorFactory extends Factory
     public function definition(): array
     {
         return [
+            'location_id' => fn () => \Database\Factories\LocationFactory::defaultId(),
             'specialty_id' => Specialty::factory(),
             'national_id' => 'V-'.fake()->unique()->numberBetween(5_000_000, 35_000_000),
             'license_number' => 'MPPS-'.fake()->unique()->numerify('######'),

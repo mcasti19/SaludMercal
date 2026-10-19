@@ -37,6 +37,12 @@ trait Auditable
         self::writeAudit($this, $event, [], $context ?: ['id' => $this->getKey()]);
     }
 
+    /** Sede of the audited record, falling back to the acting user's sede. */
+    private static function auditLocationId(Model $model): ?int
+    {
+        return $model->getAttribute('location_id') ?? auth()->user()?->location_id;
+    }
+
     /**
      * @param  array<string, mixed>  $old
      * @param  array<string, mixed>  $new
@@ -53,6 +59,7 @@ trait Auditable
 
         AuditLog::create([
             'user_id' => auth()->id(),
+            'location_id' => self::auditLocationId($model),
             'event' => $event,
             'auditable_type' => $model::class,
             'auditable_id' => $model->getKey(),

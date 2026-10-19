@@ -15,6 +15,7 @@ class PatientFactory extends Factory
     public function definition(): array
     {
         return [
+            'location_id' => fn () => \Database\Factories\LocationFactory::defaultId(),
             'national_id' => 'V-'.fake()->unique()->numberBetween(5_000_000, 35_000_000),
             'first_name' => fake()->firstName(),
             'last_name' => fake()->lastName(),

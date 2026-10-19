@@ -22,17 +22,25 @@ class LocationScope implements Scope
 
         $user = auth()->user();
 
-        // 1. National scope users (SuperAdmin) or accounts with unassigned location
-        if ($user->hasNationalScope() || is_null($user->location_id)) {
+        // 1. National scope users (SuperAdmin)
+        if ($user->hasNationalScope()) {
             return;
         }
 
-        // 2. Regular employees only query their own records (handled via user_id / visibleTo)
-        if ($user->role === UserRole::Employee) {
+        // 2. Employees (own records, via user_id / visibleTo) and logical security
+        //    (blocked from clinical data by visibleTo) are not territorial staff.
+        if (! $user->role->isStaff() || $user->role === UserRole::Employee) {
             return;
         }
 
-        // 3. Staff members are strictly enclaustered to their assigned location
+        // 3. Staff without an assigned sede see nothing (fail closed)
+        if (is_null($user->location_id)) {
+            $builder->whereRaw('1 = 0');
+
+            return;
+        }
+
+        // 4. Staff members are strictly enclaustered to their assigned location
         $builder->where($model->qualifyColumn('location_id'), $user->location_id);
     }
 }

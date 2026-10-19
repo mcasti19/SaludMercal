@@ -37,7 +37,7 @@ class AppointmentPolicy
         }
 
         return $user->hasRole(UserRole::Admin, UserRole::Receptionist)
-            && (is_null($user->location_id) || $user->location_id === $appointment->location_id);
+            && $user->canAccessLocation($appointment->location_id);
     }
 
     /**
@@ -45,7 +45,7 @@ class AppointmentPolicy
      */
     public function transition(User $user, Appointment $appointment, AppointmentStatus $target): bool
     {
-        if (! $user->hasNationalScope() && $user->role->isStaff() && $user->location_id && $user->location_id !== $appointment->location_id) {
+        if ($user->role->isStaff() && ! $user->canAccessLocation($appointment->location_id)) {
             return false;
         }
 
@@ -65,7 +65,7 @@ class AppointmentPolicy
         }
 
         return $user->isAdmin()
-            && (is_null($user->location_id) || $user->location_id === $appointment->location_id);
+            && $user->canAccessLocation($appointment->location_id);
     }
 
     private function isOwner(User $user, Appointment $appointment): bool

@@ -16,6 +16,7 @@ class AuditLogController extends Controller
 
         $logs = AuditLog::query()
             ->with('user')
+            ->visibleTo($request->user())
             ->when($request->filled('user_id'), fn ($q) => $q->where('user_id', $request->integer('user_id')))
             ->when($request->filled('event'), fn ($q) => $q->where('event', $request->string('event')))
             ->when($request->filled('auditable_type'), fn ($q) => $q->where('auditable_type', 'like', '%\\'.$request->string('auditable_type')))

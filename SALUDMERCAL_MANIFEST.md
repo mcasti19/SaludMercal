@@ -332,6 +332,8 @@ Todas las cuentas se inicializan con la contraseña estándar de desarrollo (`SE
 
 ## 11. BRECHAS CONOCIDAS ENTRE DISEÑO E IMPLEMENTACIÓN
 
+> **Actualización:** la Fase 1 del diagnóstico (2026-10-18) ya corrigió: escritura de catálogos solo `super_admin`, bitácora por sede (`audit_logs.location_id`; `logical_security` ve solo eventos de `User`), validación de beneficiarios, sede de cita = sede del médico, scope fail-closed (staff sin sede no ve nada y `UserRequest` exige sede), zona horaria `America/Caracas`, CSV de reportes, seeders de producción y acceso rápido solo en desarrollo. Las viñetas siguientes que contradigan esto son históricas; el detalle está en §9 del diagnóstico.
+
 Verificadas el 2026-10-18; detalle, evidencia y plan en [`DIAGNOSTICO_INTEGRAL_SALUDMERCAL.md`](./DIAGNOSTICO_INTEGRAL_SALUDMERCAL.md).
 
 **Seguridad / aislamiento (confirmadas con pruebas de sondeo)**

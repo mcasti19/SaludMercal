@@ -64,7 +64,7 @@ class ResourcesTest extends TestCase
 
     public function test_catalog_in_use_cannot_be_deleted(): void
     {
-        $this->actingAsRole(UserRole::Admin);
+        $this->actingAsRole(UserRole::SuperAdmin);
         $specialty = Specialty::factory()->create();
         Doctor::factory()->create(['specialty_id' => $specialty->id]);
 
@@ -77,7 +77,7 @@ class ResourcesTest extends TestCase
         $this->getJson('/api/v1/users')->assertForbidden();
 
         $admin = $this->actingAsRole(UserRole::Admin);
-        $target = User::factory()->create();
+        $target = User::factory()->create(['location_id' => $admin->location_id]);
         $target->createToken('spa-token');
 
         $this->patchJson("/api/v1/users/{$target->id}", ['is_active' => false])->assertOk();
@@ -183,7 +183,7 @@ class ResourcesTest extends TestCase
 
     public function test_locations_catalog_supports_national_states_and_headquarters(): void
     {
-        $this->actingAsRole(UserRole::Admin);
+        $this->actingAsRole(UserRole::SuperAdmin);
 
         $response = $this->postJson('/api/v1/locations', [
             'name' => 'Sede Central Mercal',

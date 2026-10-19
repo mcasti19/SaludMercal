@@ -34,6 +34,7 @@ return new class extends Migration
         Schema::create('audit_logs', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
+            $table->foreignId('location_id')->nullable()->constrained()->nullOnDelete(); // sede of the audited record
             $table->string('event', 20);
             $table->string('auditable_type');
             $table->unsignedBigInteger('auditable_id');
@@ -44,6 +45,7 @@ return new class extends Migration
 
             $table->index(['auditable_type', 'auditable_id']);
             $table->index(['user_id', 'created_at']);
+            $table->index(['location_id', 'created_at']);
         });
     }
 

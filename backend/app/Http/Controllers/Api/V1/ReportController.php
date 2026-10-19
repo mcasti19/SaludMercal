@@ -65,6 +65,14 @@ class ReportController extends Controller
         ]]);
     }
 
+    /** Neutralises spreadsheet formula injection (=, +, -, @, tab, CR) in user-provided text. */
+    private static function csvCell(?string $value): string
+    {
+        $value ??= '';
+
+        return $value !== '' && str_contains("=+-@\t\r", $value[0]) ? "'".$value : $value;
+    }
+
     public function export(Request $request): Response|StreamedResponse
     {
         abort_unless($request->user()->role->isStaff(), 403);
@@ -143,17 +151,20 @@ class ReportController extends Controller
             ->whereDate('scheduled_date', '<=', $to)
             ->with(['patient.department', 'doctor', 'specialty'])
             ->orderBy('scheduled_date')
-            ->orderBy('scheduled_time')
+            ->orderBy('start_time')
             ->get();
 
         $leaves = MedicalLeave::query()
+            ->visibleTo($request->user())
             ->whereDate('start_date', '>=', $from)
             ->whereDate('start_date', '<=', $to)
             ->with(['patient.department', 'doctor'])
             ->orderBy('start_date')
             ->get();
 
-        return response()->streamDownload(function () use ($appointments, $leaves, $from, $to) {
+        $cell = self::csvCell(...);
+
+        return response()->streamDownload(function () use ($appointments, $leaves, $from, $to, $cell) {
             $handle = fopen('php://output', 'w');
             // Write UTF-8 BOM so Excel opens it with proper encoding
             fprintf($handle, chr(0xEF).chr(0xBB).chr(0xBF));
@@ -170,15 +181,15 @@ class ReportController extends Controller
             foreach ($appointments as $a) {
                 fputcsv($handle, [
                     $a->id,
-                    $a->scheduled_date,
-                    $a->scheduled_time,
-                    $a->patient ? "{$a->patient->first_name} {$a->patient->last_name}" : 'N/A',
-                    $a->patient ? "{$a->patient->identification_type} {$a->patient->national_id}" : 'N/A',
-                    $a->patient?->department?->name ?? 'General',
-                    $a->doctor ? "Dr. {$a->doctor->first_name} {$a->doctor->last_name}" : 'N/A',
-                    $a->specialty?->name ?? 'N/A',
+                    $a->scheduled_date->toDateString(),
+                    substr($a->start_time, 0, 5),
+                    $cell($a->patient ? "{$a->patient->first_name} {$a->patient->last_name}" : 'N/A'),
+                    $cell($a->patient?->national_id ?? 'N/A'),
+                    $cell($a->patient?->department?->name ?? 'General'),
+                    $cell($a->doctor ? "Dr. {$a->doctor->first_name} {$a->doctor->last_name}" : 'N/A'),
+                    $cell($a->specialty?->name ?? 'N/A'),
                     strtoupper($a->status->value),
-                    $a->reason,
+                    $cell($a->reason),
                 ]);
             }
 
@@ -190,15 +201,15 @@ class ReportController extends Controller
             foreach ($leaves as $l) {
                 fputcsv($handle, [
                     $l->id,
-                    $l->patient ? "{$l->patient->first_name} {$l->patient->last_name}" : 'N/A',
-                    $l->patient ? "{$l->patient->identification_type} {$l->patient->national_id}" : 'N/A',
-                    $l->patient?->department?->name ?? 'General',
-                    strtoupper($l->type),
+                    $cell($l->patient ? "{$l->patient->first_name} {$l->patient->last_name}" : 'N/A'),
+                    $cell($l->patient?->national_id ?? 'N/A'),
+                    $cell($l->patient?->department?->name ?? 'General'),
+                    strtoupper($l->type->value),
                     $l->days,
-                    $l->start_date,
-                    $l->end_date,
+                    $l->start_date->toDateString(),
+                    $l->end_date->toDateString(),
                     strtoupper($l->status->value),
-                    $l->diagnosis,
+                    $cell($l->diagnosis),
                 ]);
             }
 

@@ -6,7 +6,7 @@ use App\Models\User;
 
 /**
  * Shared policy for lookup tables (departments, locations, specialties):
- * everyone authenticated can read, only administrators can write.
+ * everyone authenticated can read, only the national super administrator can write.
  */
 class CatalogPolicy
 {
@@ -22,16 +22,16 @@ class CatalogPolicy
 
     public function create(User $user): bool
     {
-        return $user->isAdmin();
+        return $user->isSuperAdmin();
     }
 
     public function update(User $user): bool
     {
-        return $user->isAdmin();
+        return $user->isSuperAdmin();
     }
 
     public function delete(User $user): bool
     {
-        return $user->isAdmin();
+        return $user->isSuperAdmin();
     }
 }

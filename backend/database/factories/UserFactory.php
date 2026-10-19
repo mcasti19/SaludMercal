@@ -35,7 +35,13 @@ class UserFactory extends Factory
 
     public function role(UserRole $role): static
     {
-        return $this->state(['role' => $role]);
+        // Territorial staff must belong to a sede (the scope fails closed otherwise).
+        return $this->state(fn () => [
+            'role' => $role,
+            'location_id' => $role->isStaff() && $role !== UserRole::SuperAdmin && $role !== UserRole::Employee
+                ? LocationFactory::defaultId()
+                : null,
+        ]);
     }
 
     public function admin(): static

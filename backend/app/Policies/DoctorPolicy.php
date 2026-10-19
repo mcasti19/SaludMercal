@@ -29,7 +29,7 @@ class DoctorPolicy
         }
 
         return $user->isAdmin()
-            && (is_null($user->location_id) || $user->location_id === $doctor->location_id);
+            && $user->canAccessLocation($doctor->location_id);
     }
 
     public function delete(User $user, Doctor $doctor): bool
@@ -39,6 +39,6 @@ class DoctorPolicy
         }
 
         return $user->isAdmin()
-            && (is_null($user->location_id) || $user->location_id === $doctor->location_id);
+            && $user->canAccessLocation($doctor->location_id);
     }
 }

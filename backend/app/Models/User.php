@@ -100,6 +100,19 @@ class User extends Authenticatable
         return $this->role === UserRole::SuperAdmin;
     }
 
+    /**
+     * Whether the user may operate on records of the given sede. Fails closed: staff
+     * without an assigned sede cannot reach any sede-bound record.
+     */
+    public function canAccessLocation(?int $locationId): bool
+    {
+        if ($this->hasNationalScope()) {
+            return true;
+        }
+
+        return $this->location_id !== null && $this->location_id === $locationId;
+    }
+
     public function hasNationalUserScope(): bool
     {
         return $this->role->hasNationalUserScope();

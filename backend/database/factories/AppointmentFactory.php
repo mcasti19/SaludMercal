@@ -16,6 +16,7 @@ class AppointmentFactory extends Factory
     public function definition(): array
     {
         return [
+            'location_id' => fn () => \Database\Factories\LocationFactory::defaultId(),
             'patient_id' => Patient::factory(),
             'doctor_id' => Doctor::factory(),
             'specialty_id' => fn (array $attrs) => Doctor::find($attrs['doctor_id'])->specialty_id,

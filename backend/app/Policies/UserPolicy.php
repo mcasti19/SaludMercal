@@ -26,7 +26,7 @@ class UserPolicy
             return true;
         }
 
-        return is_null($user->location_id) || $user->location_id === $target->location_id;
+        return $user->location_id !== null && $user->location_id === $target->location_id;
     }
 
     public function create(User $user): bool
@@ -54,7 +54,7 @@ class UserPolicy
             return true;
         }
 
-        return is_null($user->location_id) || $user->location_id === $target->location_id;
+        return $user->location_id !== null && $user->location_id === $target->location_id;
     }
 
     /** Administrators cannot delete their own account or SuperAdmin accounts. */
@@ -80,7 +80,7 @@ class UserPolicy
             return true;
         }
 
-        return is_null($user->location_id) || $user->location_id === $target->location_id;
+        return $user->location_id !== null && $user->location_id === $target->location_id;
     }
 
     public function resetPassword(User $user, User $target): bool
