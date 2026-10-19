@@ -84,6 +84,20 @@ return [
             ]) : [],
         ],
 
+        // Corporate employee directory (read-only). See config/employee_directory.php.
+        'central' => [
+            'driver' => env('DB_CENTRAL_DRIVER', 'pgsql'),
+            'host' => env('DB_CENTRAL_HOST', '127.0.0.1'),
+            'port' => env('DB_CENTRAL_PORT', '5432'),
+            'database' => env('DB_CENTRAL_DATABASE', ''),
+            'username' => env('DB_CENTRAL_USERNAME', ''),
+            'password' => env('DB_CENTRAL_PASSWORD', ''),
+            'charset' => 'utf8',
+            'prefix' => '',
+            'search_path' => env('DB_CENTRAL_SCHEMA', 'public'),
+            'sslmode' => env('DB_CENTRAL_SSLMODE', 'prefer'),
+        ],
+
         'pgsql' => [
             'driver' => 'pgsql',
             'url' => env('DB_URL'),

@@ -36,6 +36,9 @@ class PatientResource extends JsonResource
             'emergency_contact_phone' => $this->emergency_contact_phone,
             // True when the patient belongs to another sede and is only visible here (commission / appointment).
             'is_visiting' => $request->user()?->role->isStaff() === true && ! $this->belongsToSedesOf($request->user()),
+            'source' => $this->source,
+            'employment_active' => $this->employment_active,
+            'directory_synced_at' => $this->directory_synced_at?->toIso8601String(),
             'is_active' => $this->is_active,
             'created_at' => $this->created_at?->toIso8601String(),
         ];

@@ -26,6 +26,10 @@ return new class extends Migration
             $table->string('emergency_contact_name')->nullable();
             $table->string('emergency_contact_phone', 30)->nullable();
             $table->boolean('is_active')->default(true);
+            // Where the identity data comes from: the corporate directory (read-only fields) or a manual exception.
+            $table->string('source', 20)->default('manual');
+            $table->boolean('employment_active')->nullable(); // directory status of the employee
+            $table->timestamp('directory_synced_at')->nullable();
             $table->timestamps();
             $table->softDeletes();
 

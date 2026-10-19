@@ -16,7 +16,7 @@ class PatientRequest extends FormRequest
     {
         $patient = $this->route('patient');
 
-        return $patient ? $this->user()->can('update', $patient) : $this->user()->can('create', Patient::class);
+        return $patient ? $this->user()->can('update', $patient) : $this->user()->can('createManual', Patient::class);
     }
 
     protected function prepareForValidation(): void

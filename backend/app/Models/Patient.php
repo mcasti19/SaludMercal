@@ -23,6 +23,7 @@ class Patient extends Model
         'user_id', 'national_id', 'first_name', 'last_name', 'birth_date', 'gender',
         'phone', 'email', 'department_id', 'location_id', 'job_title', 'blood_type',
         'allergies', 'emergency_contact_name', 'emergency_contact_phone', 'is_active',
+        'source', 'employment_active', 'directory_synced_at',
     ];
 
     protected function casts(): array
@@ -31,7 +32,17 @@ class Patient extends Model
             'birth_date' => 'date:Y-m-d',
             'gender' => Gender::class,
             'is_active' => 'boolean',
+            'employment_active' => 'boolean',
+            'directory_synced_at' => 'datetime',
         ];
+    }
+
+    /** Identity fields owned by the corporate directory: not editable by hand once imported. */
+    public const DIRECTORY_FIELDS = ['national_id', 'first_name', 'last_name', 'birth_date', 'gender', 'department_id', 'job_title', 'location_id'];
+
+    public function isFromDirectory(): bool
+    {
+        return $this->source === 'directory';
     }
 
     protected function fullName(): Attribute

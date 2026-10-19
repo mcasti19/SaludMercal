@@ -21,7 +21,8 @@ class ResourcesTest extends TestCase
 
     public function test_patient_crud_normalizes_national_id(): void
     {
-        $this->actingAsRole(UserRole::Receptionist);
+        // Manual registration is the exception: only admins (employees come from the directory).
+        $this->actingAsRole(UserRole::Admin);
         $department = Department::factory()->create();
 
         $this->postJson('/api/v1/patients', [

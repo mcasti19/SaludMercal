@@ -102,6 +102,8 @@ export function NuevoPacienteModal({
   });
 
   const watchBloodType = watch("grupoSanguineo");
+  // Identity data imported from the employee directory cannot be edited by hand.
+  const locked = paciente?.fuente === "directory";
 
   const handleAddBeneficiaryToList = () => {
     setBFormError(null);
@@ -251,6 +253,7 @@ export function NuevoPacienteModal({
                 <input
                   id="paciente-nombre-input"
                   {...register("nombre")}
+                  readOnly={locked}
                   className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950/60 border border-slate-800 text-white text-sm focus:outline-none focus:border-cyan-500/80 focus:ring-2 focus:ring-cyan-500/20 transition-all placeholder:text-slate-600"
                   placeholder="Ej. Juan Carlos"
                 />
@@ -269,6 +272,7 @@ export function NuevoPacienteModal({
                 <input
                   id="paciente-apellido-input"
                   {...register("apellido")}
+                  readOnly={locked}
                   className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950/60 border border-slate-800 text-white text-sm focus:outline-none focus:border-cyan-500/80 focus:ring-2 focus:ring-cyan-500/20 transition-all placeholder:text-slate-600"
                   placeholder="Ej. Pérez Gómez"
                 />
@@ -307,6 +311,7 @@ export function NuevoPacienteModal({
                   id="paciente-fechanacimiento-input"
                   type="date"
                   {...register("fechaNacimiento")}
+                  readOnly={locked}
                   className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950/60 border border-slate-800 text-white text-sm focus:outline-none focus:border-cyan-500/80 focus:ring-2 focus:ring-cyan-500/20 transition-all"
                 />
                 {errors.fechaNacimiento && (
@@ -371,7 +376,9 @@ export function NuevoPacienteModal({
                 <select
                   id="paciente-departamento-select"
                   {...register("departamento")}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950/60 border border-slate-800 text-white text-sm focus:outline-none focus:border-cyan-500/80 focus:ring-2 focus:ring-cyan-500/20 transition-all"
+                  aria-readonly={locked}
+                  tabIndex={locked ? -1 : undefined}
+                  className={`w-full px-3.5 py-2.5 rounded-xl bg-slate-950/60 border border-slate-800 text-white text-sm focus:outline-none focus:border-cyan-500/80 focus:ring-2 focus:ring-cyan-500/20 transition-all ${locked ? "pointer-events-none opacity-60" : ""}`}
                 >
                   <option value="">Seleccionar departamento...</option>
                   {(departments.length > 0
@@ -398,6 +405,7 @@ export function NuevoPacienteModal({
                 <input
                   id="paciente-cargo-input"
                   {...register("cargo")}
+                  readOnly={locked}
                   placeholder="Ej. Analista de Operaciones"
                   className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950/60 border border-slate-800 text-white text-sm focus:outline-none focus:border-cyan-500/80 focus:ring-2 focus:ring-cyan-500/20 transition-all placeholder:text-slate-600"
                 />

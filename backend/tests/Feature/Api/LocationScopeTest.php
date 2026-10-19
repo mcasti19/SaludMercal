@@ -132,10 +132,10 @@ class LocationScopeTest extends TestCase
     public function test_new_record_created_by_staff_enforces_user_location(): void
     {
         $zuliaReceptionist = User::factory()->create([
-            'role' => UserRole::Receptionist,
+            'role' => UserRole::Admin,
             'location_id' => $this->zuliaLocation->id,
         ]);
-        Sanctum::actingAs($zuliaReceptionist, [UserRole::Receptionist->value]);
+        Sanctum::actingAs($zuliaReceptionist, [UserRole::Admin->value]);
 
         // Even if payload attempts to specify HQ location, system forces user's location
         $response = $this->postJson('/api/v1/patients', [

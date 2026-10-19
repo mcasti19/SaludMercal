@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\PatientResource;
 use App\Models\Patient;
 use App\Models\ServiceCommission;
+use App\Services\PatientDirectoryService;
+use App\Support\NationalId;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -29,18 +31,19 @@ class ServiceCommissionController extends Controller
     }
 
     /** The patient is looked up by national ID: reception cannot list other sedes' patients. */
-    public function store(Request $request): JsonResponse
+    public function store(Request $request, PatientDirectoryService $directory): JsonResponse
     {
         $this->authorize('create', ServiceCommission::class);
 
-        $request->merge(['national_id' => self::normalizeId($request->input('national_id'))]);
+        $request->merge(['national_id' => NationalId::normalise($request->input('national_id'))]);
         $data = $request->validate([
-            'national_id' => ['required', 'string', 'regex:'.self::NATIONAL_ID_REGEX],
+            'national_id' => ['required', 'string', 'regex:'.NationalId::REGEX],
             'reason' => ['nullable', 'string', 'max:500'],
         ]);
 
-        $patient = Patient::withoutGlobalScopes()->where('national_id', $data['national_id'])->first();
-        abort_unless($patient, 404, 'No employee was found with that national ID.');
+        // Employees who are not patients yet are opened from the corporate directory with their origin sede.
+        $patient = Patient::withoutGlobalScopes()->where('national_id', $data['national_id'])->first()
+            ?? $directory->importForCommission($data['national_id']);
 
         if ($request->user()->canAccessLocation($patient->location_id)) {
             return response()->json(['message' => 'The employee already belongs to your sede or group.'], 422);
@@ -78,18 +81,5 @@ class ServiceCommissionController extends Controller
             'destination_location' => ['id' => $c->location?->id, 'name' => $c->location?->name],
             'registered_by' => $c->registrar?->name,
         ];
-    }
-
-    private const NATIONAL_ID_REGEX = '/^[VE]-\d{5,9}$/';
-
-    private static function normalizeId(mixed $value): mixed
-    {
-        if (! is_string($value)) {
-            return $value;
-        }
-
-        $clean = strtoupper(preg_replace('/[\s.\-]/', '', $value));
-
-        return preg_match('/^([VE])(\d+)$/', $clean, $m) ? $m[1].'-'.$m[2] : $value;
     }
 }

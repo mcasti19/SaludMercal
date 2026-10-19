@@ -170,6 +170,10 @@ export interface ApiPatient {
   is_active: boolean;
   /** True when the patient belongs to another sede and is only visible here (commission / appointment). */
   is_visiting?: boolean;
+  /** `directory` = identity data owned by the corporate employee directory (read-only). */
+  source?: "directory" | "manual";
+  employment_active?: boolean | null;
+  directory_synced_at?: string | null;
   created_at?: string;
   beneficiaries?: ApiBeneficiary[];
   appointments?: ApiAppointment[];
@@ -425,6 +429,51 @@ export async function apiUpdatePatient(
     method: "PUT",
     body: JSON.stringify(payload),
   });
+  return res.data;
+}
+
+export type DirectoryLookupStatus =
+  | "available"
+  | "has_record"
+  | "other_sede"
+  | "sede_not_mapped";
+
+export interface DirectoryLookupResult {
+  status: DirectoryLookupStatus;
+  message: string;
+  patient: ApiPatient | null;
+  origin_sede: string | null;
+  employee: {
+    national_id: string;
+    first_name: string;
+    last_name: string;
+    birth_date: string | null;
+    job_title: string | null;
+    department: string | null;
+    sede: string | null;
+    is_active: boolean;
+  } | null;
+}
+
+/** "Buscar empleado por cédula" in the corporate directory (404 when it does not exist). */
+export async function apiLookupEmployee(nationalId: string): Promise<DirectoryLookupResult> {
+  const res = await apiFetch<{ data: DirectoryLookupResult }>("/v1/patients/directory-lookup", {
+    method: "POST",
+    body: JSON.stringify({ national_id: nationalId }),
+  });
+  return res.data;
+}
+
+export async function apiCreatePatientFromDirectory(nationalId: string): Promise<ApiPatient> {
+  const res = await apiFetch<{ data: ApiPatient }>("/v1/patients/from-directory", {
+    method: "POST",
+    body: JSON.stringify({ national_id: nationalId }),
+  });
+  return res.data;
+}
+
+export async function apiSyncPatientFromDirectory(id: number | string): Promise<ApiPatient> {
+  const res = await apiFetch<{ data: ApiPatient }>(`/v1/patients/${id}/sync-directory`, { method: "POST" });
   return res.data;
 }
 

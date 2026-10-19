@@ -14,6 +14,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 trait BelongsToLocation
 {
+    /** Set by domain services that decide the sede themselves (e.g. directory import). */
+    public bool $keepLocation = false;
+
     public static function bootBelongsToLocation(): void
     {
         static::addGlobalScope(new LocationScope());
@@ -22,9 +25,19 @@ trait BelongsToLocation
             if (auth()->check()) {
                 $user = auth()->user();
 
+                if ($model->keepLocation) {
+                    return;
+                }
+
                 // Employees act across sedes (e.g. booking with a doctor of another sede):
                 // the record keeps the location chosen by the domain service.
                 if ($user->role === UserRole::Employee && $model->location_id) {
+                    return;
+                }
+
+                // A sede already decided by the domain (e.g. the employee's sede from the directory) is kept
+                // when the user can operate there (their group); otherwise it is forced to the user's sede.
+                if ($model->location_id && ! $user->hasNationalScope() && $user->canAccessLocation((int) $model->location_id)) {
                     return;
                 }
 

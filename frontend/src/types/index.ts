@@ -101,6 +101,9 @@ export interface Paciente {
   isHeadquarters?: boolean;
   /** Pertenece a otra sede y solo es visible aquí por comisión de servicio o cita. */
   enComision?: boolean;
+  /** `directory`: nombre, cédula, nacimiento, cargo, departamento y sede vienen de la nómina y son de solo lectura. */
+  fuente?: "directory" | "manual";
+  empleoActivo?: boolean | null;
   cargo?: string;
   grupoSanguineo?: string;
   alergias?: string;

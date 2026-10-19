@@ -60,9 +60,10 @@ class PatientController extends Controller
 
     public function store(PatientRequest $request): JsonResponse
     {
-        $this->authorize('create', Patient::class);
+        $this->authorize('createManual', Patient::class);
 
         $data = $request->validated();
+        $data['source'] = 'manual';
         $beneficiariesData = $data['beneficiaries'] ?? null;
         unset($data['beneficiaries']);
 
@@ -90,6 +91,11 @@ class PatientController extends Controller
         $this->authorize('update', $patient);
 
         $data = $request->validated();
+
+        // Identity data imported from the corporate directory is read-only.
+        if ($patient->isFromDirectory()) {
+            $data = \Illuminate\Support\Arr::except($data, Patient::DIRECTORY_FIELDS);
+        }
         $beneficiariesData = $data['beneficiaries'] ?? null;
         unset($data['beneficiaries']);
 

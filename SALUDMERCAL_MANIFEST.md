@@ -143,6 +143,13 @@ Cualquier cambio o desarrollo futuro en la plataforma debe respetar las siguient
 - La tabla `users` con rol `employee` se vincula biunívocamente (1:1) con la tabla `patients` a través de la clave foránea `patients.user_id`.
 - Cuando un empleado inicia sesión en el frontend, el sistema detecta su rol y lo redirige automáticamente al **Portal del Empleado** (`/portal`), resolviendo de forma transparente su `patient_id` subyacente.
 
+### 6.1b Origen de los Pacientes: Nómina Corporativa (Directorio de Empleados)
+- Todo paciente es un empleado, pero no todo empleado es paciente: el expediente se abre **por demanda** con «Nuevo Paciente → Buscar empleado por cédula» (`POST /patients/directory-lookup` y `/patients/from-directory`), sin cargar masivamente los ~6.000 empleados.
+- La fuente es una vista de solo lectura de la BD central (`EmployeeDirectory`: driver `database` con `config/employee_directory.php` y la conexión `central`; driver `local` con la tabla de prueba `directory_employees` mientras no exista la vista). La **sede/estado** del empleado en la nómina determina su sede (`SedeResolver`: por nombre, código o estado, o alias en config); si no tiene equivalencia no se puede importar.
+- Se guarda un snapshot local (`patients.source = 'directory'`, `employment_active`, `directory_synced_at`). Cédula, nombres, nacimiento, sexo, cargo, departamento y sede son de **solo lectura**; se editan localmente teléfono/correo y toda la ficha médica. `patients:sync-directory` (diario 02:00) y `POST /patients/{id}/sync-directory` refrescan los datos, incluida la sede (queda en la bitácora).
+- El personal solo abre expedientes de empleados de su sede/grupo (recepción y admin); para otras sedes se usa la comisión de servicio, que también abre el expediente desde la nómina con su sede de origen. Alta manual (`POST /patients`, `source = 'manual'`): solo `admin`/`super_admin`, como excepción para quien no figura en la nómina.
+- Las búsquedas por cédula se limitan (20/min por usuario) y se auditan (`directory_lookup`) para evitar enumerar la nómina.
+
 ### 6.2 Regla de Aislamiento Territorial Multisede (`LocationScope`)
 - Hay 25 sedes sembradas. **Grupo `caracas`** (`locations.location_group`): Sede Central (`is_headquarters = true`), Capital y Vargas. Las sedes de un mismo grupo comparten pacientes, médicos/agendas, citas, reposos, exámenes, usuarios y bitácora (`User::accessibleLocationIds()`); el resto de estados son grupos de una sola sede.
 - **Citas entre sedes:** un trabajador puede pedir cita con un médico de otra sede. La cita pertenece a la sede donde se atiende (`appointments.location_id`) y la sede de origen del paciente la ve siempre (historial completo). La sede de atención ve al paciente solo con datos básicos (`is_visiting`): sin reposos ni exámenes de su sede de origen, y sin poder editarlo.
@@ -245,6 +252,7 @@ Base de datos relacional PostgreSQL con integridad referencial estricta:
 | `departments` | Departamentos organizacionales de Mercal (Logística, Almacén, RRHH, etc.). | — |
 | `specialties` | Especialidades médicas ofertadas (Medicina General, Pediatría, Cardiología, etc.). | — |
 | `patients` | Ficha técnica y médica del paciente/trabajador. | `user_id -> users.id`, `location_id -> locations.id`, `department_id -> departments.id` |
+| `directory_employees` | Tabla de prueba de la nómina para el driver `local` (en producción se lee la vista central). | — |
 | `patient_beneficiaries`| Familiares directos del trabajador (nombre, parentesco, cédula, nacimiento, sexo, teléfono, activo). Soft deletes. | `patient_id -> patients.id` (Cascade On Delete) |
 | `doctors` | Registro de profesionales médicos, código de colegiatura/MPPS y consultorio. | `user_id -> users.id`, `specialty_id -> specialties.id`, `location_id -> locations.id` |
 | `doctor_specialty` | Tabla pivote para soporte de múltiples especialidades médicas por doctor. | `doctor_id`, `specialty_id` |

@@ -8,6 +8,7 @@ import { Paciente } from "@/types";
 import { calcularEdad } from "@/lib/utils";
 import { NuevoPacienteModal } from "./NuevoPacienteModal";
 import { ComisionServicioModal } from "./ComisionServicioModal";
+import { BuscarEmpleadoModal } from "./BuscarEmpleadoModal";
 import { useAuthStore } from "@/modules/auth/auth.store";
 
 export function PacientesContent() {
@@ -24,6 +25,8 @@ export function PacientesContent() {
   } = usePacientesStore();
   const role = useAuthStore((s) => s.user?.role);
   const canRegisterCommission = role === "RECEPCION" || role === "ADMIN";
+  const canRegisterManually = role === "ADMIN" || role === "SUPERADMIN";
+  const [showSearch, setShowSearch] = useState(false);
   const [showCommission, setShowCommission] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [pacienteToEdit, setPacienteToEdit] = useState<Paciente | null>(null);
@@ -81,7 +84,7 @@ export function PacientesContent() {
         )}
         <button
           id="pacientes-nuevo-btn"
-          onClick={() => { setPacienteToEdit(null); setShowModal(true); }}
+          onClick={() => setShowSearch(true)}
           className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-blue-500 to-cyan-500 text-white text-sm font-semibold hover:from-blue-400 hover:to-cyan-400 transition-all shadow-lg shadow-blue-500/20 shrink-0"
         >
           <Plus className="w-4 h-4" />
@@ -248,6 +251,27 @@ export function PacientesContent() {
         <p className="text-slate-500 text-xs text-right">
           Mostrando {filtered.length} de {pacientes.length} pacientes
         </p>
+      )}
+
+      {showSearch && (
+        <BuscarEmpleadoModal
+          onClose={() => setShowSearch(false)}
+          onOpenPaciente={(p) => {
+            setShowSearch(false);
+            fetchPacientes();
+            setPacienteToEdit(p);
+            setShowModal(true);
+          }}
+          onManual={
+            canRegisterManually
+              ? () => {
+                  setShowSearch(false);
+                  setPacienteToEdit(null);
+                  setShowModal(true);
+                }
+              : undefined
+          }
+        />
       )}
 
       {showCommission && (

@@ -36,6 +36,12 @@ class PatientPolicy
         return $user->hasRole(UserRole::SuperAdmin, UserRole::Admin, UserRole::Receptionist);
     }
 
+    /** Manual registration is the exception for people missing from the corporate directory. */
+    public function createManual(User $user): bool
+    {
+        return $user->hasRole(UserRole::SuperAdmin, UserRole::Admin);
+    }
+
     public function update(User $user, Patient $patient): bool
     {
         if ($user->hasNationalScope()) {

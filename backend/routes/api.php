@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\V1\LocationController;
 use App\Http\Controllers\Api\V1\MedicalExamController;
 use App\Http\Controllers\Api\V1\MedicalLeaveController;
 use App\Http\Controllers\Api\V1\PatientController;
+use App\Http\Controllers\Api\V1\PatientDirectoryController;
 use App\Http\Controllers\Api\V1\ReportController;
 use App\Http\Controllers\Api\V1\ServiceCommissionController;
 use App\Http\Controllers\Api\V1\SpecialtyController;
@@ -48,6 +49,10 @@ Route::prefix('v1')->group(function () {
             Route::get('service-commissions', [ServiceCommissionController::class, 'index']);
             Route::post('service-commissions', [ServiceCommissionController::class, 'store']);
             Route::post('service-commissions/{service_commission}/end', [ServiceCommissionController::class, 'end']);
+
+            Route::post('patients/directory-lookup', [PatientDirectoryController::class, 'lookup'])->middleware('throttle:directory');
+            Route::post('patients/from-directory', [PatientDirectoryController::class, 'store'])->middleware('throttle:directory');
+            Route::post('patients/{patient}/sync-directory', [PatientDirectoryController::class, 'sync']);
 
             Route::get('patients/me', [PatientController::class, 'me']);
             Route::apiResource('patients', PatientController::class);
