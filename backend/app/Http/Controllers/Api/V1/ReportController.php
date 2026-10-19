@@ -21,7 +21,7 @@ class ReportController extends Controller
 {
     public function summary(Request $request): JsonResponse
     {
-        abort_unless($request->user()->role->isStaff(), 403);
+        abort_unless($request->user()->role->isStaff() || ($request->user()->isDeveloper() && $request->user()->hasClinicalAccess()), 403);
 
         $filters = $request->validate([
             'date_from' => ['nullable', 'date_format:Y-m-d'],
@@ -75,7 +75,7 @@ class ReportController extends Controller
 
     public function export(Request $request): Response|StreamedResponse
     {
-        abort_unless($request->user()->role->isStaff(), 403);
+        abort_unless($request->user()->role->isStaff() || ($request->user()->isDeveloper() && $request->user()->hasClinicalAccess()), 403);
 
         $validated = $request->validate([
             'format' => ['nullable', 'in:csv,pdf'],
@@ -168,18 +168,19 @@ class ReportController extends Controller
             $handle = fopen('php://output', 'w');
             // Write UTF-8 BOM so Excel opens it with proper encoding
             fprintf($handle, chr(0xEF).chr(0xBB).chr(0xBF));
+            $put = fn (array $row) => fputcsv($handle, $row, ',', '"', '');
 
-            fputcsv($handle, ['MERCADOS DE ALIMENTOS, C.A. (MERCAL) - REPORTE DE GESTIÓN DE SALUD']);
-            fputcsv($handle, ["Período: {$from} al {$to}"]);
-            fputcsv($handle, ['Generado:', now()->toDateTimeString()]);
-            fputcsv($handle, []);
+            $put(['MERCADOS DE ALIMENTOS, C.A. (MERCAL) - REPORTE DE GESTIÓN DE SALUD']);
+            $put(["Período: {$from} al {$to}"]);
+            $put(['Generado:', now()->toDateTimeString()]);
+            $put([]);
 
             // 1. Citas
-            fputcsv($handle, ['--- CITAS MÉDICAS ---']);
-            fputcsv($handle, ['ID', 'Fecha', 'Hora', 'Paciente', 'Cédula', 'Departamento', 'Médico', 'Especialidad', 'Estado', 'Motivo']);
+            $put(['--- CITAS MÉDICAS ---']);
+            $put(['ID', 'Fecha', 'Hora', 'Paciente', 'Cédula', 'Departamento', 'Médico', 'Especialidad', 'Estado', 'Motivo']);
 
             foreach ($appointments as $a) {
-                fputcsv($handle, [
+                $put([
                     $a->id,
                     $a->scheduled_date->toDateString(),
                     substr($a->start_time, 0, 5),
@@ -193,13 +194,13 @@ class ReportController extends Controller
                 ]);
             }
 
-            fputcsv($handle, []);
+            $put([]);
             // 2. Reposos
-            fputcsv($handle, ['--- REPOSOS MÉDICOS ---']);
-            fputcsv($handle, ['ID', 'Empleado', 'Cédula', 'Departamento', 'Tipo', 'Días', 'Fecha Inicio', 'Fecha Fin', 'Estado', 'Diagnóstico']);
+            $put(['--- REPOSOS MÉDICOS ---']);
+            $put(['ID', 'Empleado', 'Cédula', 'Departamento', 'Tipo', 'Días', 'Fecha Inicio', 'Fecha Fin', 'Estado', 'Diagnóstico']);
 
             foreach ($leaves as $l) {
-                fputcsv($handle, [
+                $put([
                     $l->id,
                     $cell($l->patient ? "{$l->patient->first_name} {$l->patient->last_name}" : 'N/A'),
                     $cell($l->patient?->national_id ?? 'N/A'),

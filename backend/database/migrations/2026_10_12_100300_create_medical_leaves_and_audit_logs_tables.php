@@ -31,6 +31,18 @@ return new class extends Migration
             $table->index(['location_id', 'start_date']);
         });
 
+        // Time-boxed, justified "break-glass" access granted to the developer role.
+        Schema::create('emergency_accesses', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->text('reason');
+            $table->string('ip_address', 45)->nullable();
+            $table->timestamp('expires_at');
+            $table->timestamp('ended_at')->nullable();
+            $table->timestamps();
+            $table->index(['user_id', 'expires_at']);
+        });
+
         Schema::create('audit_logs', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
@@ -52,6 +64,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('audit_logs');
+        Schema::dropIfExists('emergency_accesses');
         Schema::dropIfExists('medical_leaves');
     }
 };

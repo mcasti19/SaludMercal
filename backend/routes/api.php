@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\V1\AuditLogController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\DepartmentController;
 use App\Http\Controllers\Api\V1\DoctorController;
+use App\Http\Controllers\Api\V1\EmergencyAccessController;
 use App\Http\Controllers\Api\V1\LocationController;
 use App\Http\Controllers\Api\V1\MedicalExamController;
 use App\Http\Controllers\Api\V1\MedicalLeaveController;
@@ -27,6 +28,13 @@ Route::prefix('v1')->group(function () {
 
         // Everything below requires the account not to be flagged for a password change.
         Route::middleware('password.changed')->group(function () {
+            // Break-glass access (developer only) is outside the read-only guard on purpose.
+            Route::get('emergency-access', [EmergencyAccessController::class, 'show']);
+            Route::post('emergency-access', [EmergencyAccessController::class, 'store']);
+            Route::delete('emergency-access', [EmergencyAccessController::class, 'destroy']);
+        });
+
+        Route::middleware(['password.changed', 'developer.readonly', 'emergency.audit'])->group(function () {
 
             Route::post('users/{user}/reset-password', [UserController::class, 'resetPassword']);
             Route::apiResource('users', UserController::class);

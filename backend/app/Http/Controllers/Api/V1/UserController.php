@@ -91,6 +91,11 @@ class UserController extends Controller
             unset($data['location_id']);
         }
 
+        // Logical security can only enable/disable the developer account.
+        if ($user->isDeveloper()) {
+            $data = array_intersect_key($data, ['is_active' => true]);
+        }
+
         if (! empty($data['password'])) {
             $months = (int) ($data['password_expiration_months'] ?? $user->password_expiration_months ?? 3);
             $data['password_changed_at'] = now();

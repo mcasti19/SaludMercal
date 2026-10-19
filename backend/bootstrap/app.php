@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Middleware\AuditEmergencyAccess;
+use App\Http\Middleware\DeveloperReadOnlyInProduction;
 use App\Http\Middleware\EnsurePasswordIsChanged;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -19,6 +21,8 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'password.changed' => EnsurePasswordIsChanged::class,
+            'developer.readonly' => DeveloperReadOnlyInProduction::class,
+            'emergency.audit' => AuditEmergencyAccess::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

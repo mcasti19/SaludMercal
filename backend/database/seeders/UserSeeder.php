@@ -58,6 +58,24 @@ class UserSeeder extends Seeder
             ]
         );
 
+        // 2b. Developer (support) account: read-only, clinical data only through an emergency access
+        User::updateOrCreate(
+            ['username' => 'desarrollador'],
+            [
+                'name' => 'Desarrollador (Soporte)',
+                'email' => 'desarrollador@mercal.gob.ve',
+                'role' => UserRole::Developer,
+                'location_id' => null,
+                'is_active' => true,
+                'must_change_password' => false,
+                'password_expiration_months' => 3,
+                'session_timeout_minutes' => 30,
+                'password_changed_at' => now(),
+                'password_expires_at' => now()->addMonths(3),
+                'password' => $defaultPassword,
+            ]
+        );
+
         // 3. Sede Central Admin (admin@mercal.gob.ve / admin)
         User::updateOrCreate(
             ['username' => 'admin'],

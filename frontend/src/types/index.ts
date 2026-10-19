@@ -7,6 +7,7 @@
 export type UserRole =
   | "SUPERADMIN"
   | "SEGURIDAD_LOGICA"
+  | "DESARROLLADOR"
   | "ADMIN"
   | "RECEPCION"
   | "MEDICO"

@@ -17,6 +17,11 @@ class UserPolicy
             return false;
         }
 
+        // The developer account is only visible to logical security (which can enable/disable it).
+        if ($target->isDeveloper()) {
+            return $user->isLogicalSecurity();
+        }
+
         // Only the SuperAdmin can view their own SuperAdmin account; nobody else can view SuperAdmins.
         if ($target->isSuperAdmin()) {
             return $user->is($target);
@@ -38,6 +43,11 @@ class UserPolicy
     {
         if (! $user->canManageUsers()) {
             return false;
+        }
+
+        // Only logical security may touch the developer account (activation only, see UserController).
+        if ($target->isDeveloper()) {
+            return $user->isLogicalSecurity();
         }
 
         // Only SuperAdmin can modify SuperAdmin accounts, and only their own account
@@ -68,7 +78,7 @@ class UserPolicy
             return false;
         }
 
-        if ($target->isSuperAdmin()) {
+        if ($target->isSuperAdmin() || $target->isDeveloper()) {
             return false;
         }
 
@@ -85,6 +95,7 @@ class UserPolicy
 
     public function resetPassword(User $user, User $target): bool
     {
-        return $this->update($user, $target);
+        // The developer's credentials are never set by anybody else.
+        return ! $target->isDeveloper() && $this->update($user, $target);
     }
 }

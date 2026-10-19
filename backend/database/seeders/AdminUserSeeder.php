@@ -8,8 +8,10 @@ use Illuminate\Database\Seeder;
 use RuntimeException;
 
 /**
- * Creates the initial administrator. The password comes from the environment
- * (SEED_ADMIN_PASSWORD) and is mandatory in production.
+ * Creates the initial institutional super administrator and the developer (support) account.
+ * Passwords come from the environment (SEED_ADMIN_PASSWORD / SEED_DEVELOPER_PASSWORD) and are
+ * mandatory in production, where the developer account is created disabled: logical security
+ * enables it only for the duration of a support task.
  */
 class AdminUserSeeder extends Seeder
 {
@@ -40,5 +42,34 @@ class AdminUserSeeder extends Seeder
         );
 
         $this->command?->info("Administrator ready: {$email}");
+
+        $this->seedDeveloper();
+    }
+
+    private function seedDeveloper(): void
+    {
+        $password = env('SEED_DEVELOPER_PASSWORD');
+
+        if (! $password) {
+            if (app()->isProduction()) {
+                throw new RuntimeException('SEED_DEVELOPER_PASSWORD must be set to seed the developer user in production.');
+            }
+
+            $password = 'Password123*';
+        }
+
+        User::updateOrCreate(
+            ['email' => env('SEED_DEVELOPER_EMAIL', 'desarrollador@mercal.gob.ve')],
+            [
+                'name' => 'Desarrollador (Soporte)',
+                'username' => env('SEED_DEVELOPER_USERNAME', 'desarrollador'),
+                'role' => UserRole::Developer,
+                'location_id' => null,
+                'is_active' => ! app()->isProduction(),
+                'must_change_password' => app()->isProduction(),
+                'session_timeout_minutes' => 30,
+                'password' => $password,
+            ]
+        );
     }
 }

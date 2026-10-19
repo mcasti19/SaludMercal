@@ -10,12 +10,12 @@ class MedicalExamPolicy
 {
     public function viewAny(User $user): bool
     {
-        return ! $user->isLogicalSecurity();
+        return $user->hasClinicalAccess();
     }
 
     public function view(User $user, MedicalExam $exam): bool
     {
-        if ($user->isLogicalSecurity()) {
+        if (! $user->hasClinicalAccess()) {
             return false;
         }
 

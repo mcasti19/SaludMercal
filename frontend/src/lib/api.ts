@@ -834,6 +834,29 @@ export function downloadBlobAsFile(blob: Blob, filename: string): void {
   URL.revokeObjectURL(url);
 }
 
+// ─── Emergency access (developer role) ───────────────────────────────────────
+
+export interface EmergencyAccessStatus {
+  active: boolean;
+  expires_at: string | null;
+}
+
+export async function apiGetEmergencyAccess(): Promise<EmergencyAccessStatus> {
+  return (await apiFetch<{ data: EmergencyAccessStatus }>("/v1/emergency-access")).data;
+}
+
+export async function apiOpenEmergencyAccess(reason: string): Promise<EmergencyAccessStatus> {
+  const res = await apiFetch<{ data: EmergencyAccessStatus }>("/v1/emergency-access", {
+    method: "POST",
+    body: JSON.stringify({ reason }),
+  });
+  return res.data;
+}
+
+export async function apiCloseEmergencyAccess(): Promise<EmergencyAccessStatus> {
+  return (await apiFetch<{ data: EmergencyAccessStatus }>("/v1/emergency-access", { method: "DELETE" })).data;
+}
+
 // ─── Users & IAM Management ──────────────────────────────────────────────────
 
 export interface CreateUserData {

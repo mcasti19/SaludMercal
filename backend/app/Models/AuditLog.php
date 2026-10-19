@@ -34,6 +34,13 @@ class AuditLog extends Model
             return $query->where('auditable_type', User::class);
         }
 
+        // Developer: technical trail always; clinical trail (old/new values) only in an emergency access.
+        if ($user->isDeveloper()) {
+            return $user->hasClinicalAccess()
+                ? $query
+                : $query->whereIn('auditable_type', [User::class, EmergencyAccess::class]);
+        }
+
         if ($user->isAdmin() && $user->location_id !== null) {
             return $query->where('location_id', $user->location_id);
         }

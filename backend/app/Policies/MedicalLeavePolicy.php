@@ -12,16 +12,12 @@ class MedicalLeavePolicy
 {
     public function viewAny(User $user): bool
     {
-        if ($user->isLogicalSecurity()) {
-            return false;
-        }
-
-        return true; // results are always narrowed with MedicalLeave::visibleTo()
+        return $user->hasClinicalAccess(); // results are always narrowed with MedicalLeave::visibleTo()
     }
 
     public function view(User $user, MedicalLeave $leave): bool
     {
-        if ($user->isLogicalSecurity()) {
+        if (! $user->hasClinicalAccess()) {
             return false;
         }
 
@@ -30,11 +26,7 @@ class MedicalLeavePolicy
 
     public function create(User $user): bool
     {
-        if ($user->isLogicalSecurity()) {
-            return false;
-        }
-
-        return true;
+        return $user->hasClinicalAccess() && ! $user->isDeveloper();
     }
 
     public function review(User $user, MedicalLeave $leave): bool

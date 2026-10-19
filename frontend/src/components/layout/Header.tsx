@@ -7,6 +7,7 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { EmergencyAccessButton } from "@/components/layout/EmergencyAccessButton";
 
 export function Header() {
   const router = useRouter();
@@ -64,6 +65,7 @@ export function Header() {
 
       {/* Right side */}
       <div className="flex items-center gap-3">
+        {user?.role === "DESARROLLADOR" && <EmergencyAccessButton />}
         <ThemeToggle />
 
         {/* Notifications */}

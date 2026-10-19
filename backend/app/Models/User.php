@@ -8,6 +8,7 @@ use App\Models\Concerns\SearchesColumns;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -33,6 +34,10 @@ class User extends Authenticatable
         'session_timeout_minutes',
         'password',
     ];
+
+    private bool $emergencyAccessLoaded = false;
+
+    private ?EmergencyAccess $activeEmergencyAccess = null;
 
     protected $hidden = [
         'password',
@@ -68,6 +73,40 @@ class User extends Authenticatable
     public function location(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(Location::class);
+    }
+
+    public function emergencyAccesses(): HasMany
+    {
+        return $this->hasMany(EmergencyAccess::class);
+    }
+
+    public function isDeveloper(): bool
+    {
+        return $this->role->isDeveloper();
+    }
+
+    /** The currently open emergency access, if any (memoised per request). */
+    public function activeEmergencyAccess(bool $refresh = false): ?EmergencyAccess
+    {
+        if ($refresh || $this->emergencyAccessLoaded === false) {
+            $this->activeEmergencyAccess = $this->emergencyAccesses()->active()->latest('id')->first();
+            $this->emergencyAccessLoaded = true;
+        }
+
+        return $this->activeEmergencyAccess;
+    }
+
+    /**
+     * Whether the user may read clinical data right now: logical security never can, the
+     * developer only inside an emergency access, everyone else per their own policies.
+     */
+    public function hasClinicalAccess(): bool
+    {
+        return match (true) {
+            $this->isLogicalSecurity() => false,
+            $this->isDeveloper() => $this->activeEmergencyAccess() !== null,
+            default => true,
+        };
     }
 
     public function hasRole(UserRole ...$roles): bool
@@ -110,6 +149,10 @@ class User extends Authenticatable
             return true;
         }
 
+        if ($this->isDeveloper()) {
+            return $this->hasClinicalAccess();
+        }
+
         return $this->location_id !== null && $this->location_id === $locationId;
     }
 
@@ -134,6 +177,7 @@ class User extends Authenticatable
      * Rules:
      * - Nobody except SuperAdmin can see SuperAdmin users.
      * - A SuperAdmin can ONLY see themselves among SuperAdmin accounts.
+     * - Developer accounts are hidden from everybody except logical security and themselves.
      *
      * @param Builder<User> $query
      * @param User $viewer
@@ -141,6 +185,11 @@ class User extends Authenticatable
      */
     public function scopeVisibleTo(Builder $query, User $viewer): Builder
     {
+        // The developer account is only visible to itself and to logical security (OTIC).
+        if (! $viewer->isLogicalSecurity()) {
+            $query->where(fn (Builder $q) => $q->where('role', '!=', UserRole::Developer)->orWhere('id', $viewer->id));
+        }
+
         if ($viewer->isSuperAdmin()) {
             return $query->where(function (Builder $q) use ($viewer) {
                 $q->where('role', '!=', UserRole::SuperAdmin)

@@ -115,8 +115,9 @@ La plataforma aplica el principio de **menor privilegio** y estricta confidencia
 
 | Rol (`role`) | Denominación | Alcance Territorial | Acceso a Datos Clínicos | Responsabilidades Principales |
 |---|---|---|---|---|
-| `super_admin` | Super Administrador | **Nacional** (Todas las Sedes) | Sí (Auditoría/Supervisión) | Control global, gestión de sedes, especialidades, catálogos, reportes ejecutivos nacionales y todos los usuarios. (Nota: hoy el `admin` de sede también puede escribir catálogos — ver §11.) |
+| `super_admin` | Administrador General (institucional) | **Nacional** (Todas las Sedes) | Sí (Auditoría/Supervisión) | Control global, gestión de sedes, especialidades, catálogos, reportes ejecutivos nacionales y todos los usuarios. (Nota: hoy el `admin` de sede también puede escribir catálogos — ver §11.) |
 | `logical_security` | Seguridad Lógica (OTIC) | **Nacional** | **NO (Estrictamente Bloqueado)** | Gestión y reseteo de cuentas, políticas de caducidad de contraseñas y tiempo de sesión. **No tiene permiso de lectura sobre diagnósticos ni pacientes** y, hoy, **tampoco accede a `/audit-logs`** (devuelve 403). |
+| `developer` | Desarrollador (Soporte técnico) | **Nacional, solo lectura** | **Solo con Acceso de Emergencia** (motivo ≥ 20 caracteres, 30 min, auditado) | Diagnóstico y soporte: bitácora técnica, configuración y lectura. **Nunca crea, edita ni elimina**; en producción un middleware rechaza cualquier método no seguro. Oculto en los listados de usuarios (solo lo ve `logical_security`, que únicamente puede activarlo/desactivarlo). Se aprovisiona solo por seeder, desactivado en producción. |
 | `admin` | Administrador de Sede | **Local** (Su sede asignada) | Sí (Gestión médica de sede) | Coordinación médica de la sede, gestión de personal médico/enfermería, revisión y convalidación de reposos médicos de su región. |
 | `doctor` | Médico Especialista | **Local** (su sede) | Sí (ve **todos los pacientes de su sede**; solo las citas asignadas a él) | Iniciar/completar/marcar inasistencia de sus citas, revisar reposos de su sede, cargar exámenes. La disponibilidad y horarios los administra el `admin`. |
 | `nurse` | Personal de Enfermería | **Local** (Sede asignada) | Sí (lectura clínica de su sede) | Confirmar citas, iniciar atención y cargar exámenes. **El registro de signos vitales/triaje aún no está implementado.** |
@@ -128,6 +129,7 @@ La plataforma aplica el principio de **menor privilegio** y estricta confidencia
 - **Tiempo de Sesión:** configuración individual (`session_timeout_minutes`: 5, 20, 30, 60). Funciona como **vida máxima del token desde el login** (no como cierre por inactividad; no hay temporizador de inactividad en el frontend).
 - **Forzado de Cambio de Clave:** Bandera `must_change_password` para primer ingreso o restablecimiento administrativo.
 - **Protección contra Fuerza Bruta:** throttling `login` (5/min por login+IP, 20/min por IP). No hay bloqueo de cuenta tras N fallos ni historial de contraseñas.
+- **Acceso de Emergencia (break-glass):** `POST/GET/DELETE /api/v1/emergency-access` (solo `developer`). Sin una ventana abierta, el desarrollador recibe 403/vacío en pacientes, citas, reposos, exámenes y reportes, y solo ve en la bitácora los eventos de `User` y de accesos de emergencia. Dentro de la ventana cada petición queda registrada (`event = accessed`, método, ruta, estado) además de la apertura (con motivo) en `emergency_accesses`.
 - **Trazabilidad Forense:** Las mutaciones (create/update/delete) de `User`, `Patient`, `PatientBeneficiary`, `Doctor`, `Appointment`, `MedicalLeave` y `MedicalExam` generan registro en `audit_logs` (IP, usuario, valores anteriores/nuevos en JSON; se excluyen `password`/campos ocultos). Solo los **exámenes médicos** registran además lecturas (`viewed`/`downloaded`). `audit_logs` no tiene `location_id` y `admin`/`super_admin` leen todo.
 
 ---
@@ -253,6 +255,7 @@ Base de datos relacional PostgreSQL con integridad referencial estricta:
 | `medical_exam_files` | Archivos adjuntos digitales (imágenes, PDFs) de exámenes médicos. | `medical_exam_id -> medical_exams.id` |
 | `personal_access_tokens` | Tokens Sanctum (`spa-token`) con expiración. | `tokenable` polimórfico |
 | `sessions`, `password_reset_tokens`, `cache`, `jobs` | Tablas de framework creadas; la autenticación usa tokens, no sesiones, y no existe reseteo por correo. | — |
+| `emergency_accesses` | Ventanas de acceso de emergencia del desarrollador (motivo, IP, `expires_at`, `ended_at`). | `user_id -> users.id` |
 | `audit_logs` | Registro de mutaciones (y lecturas de exámenes) con `event`, `auditable_type/id`, `old_values`, `new_values`, `ip_address`. **Sin `location_id`.** | `user_id -> users.id` |
 
 ---
@@ -311,6 +314,7 @@ Todas las cuentas se inicializan con la contraseña estándar de desarrollo (`SE
 
 | Rol / Perfil | Usuario (`username`) | Correo Institucional | Sede Asignada |
 |---|---|---|---|
+| **Desarrollador (Soporte)** | `desarrollador` | `desarrollador@mercal.gob.ve` | Nacional (solo lectura; en producción se crea desactivado con `SEED_DEVELOPER_*`) |
 | **Super Administrador** | `moicastillo` | `moicastillo@mercal.gob.ve` | Sede Central (Nacional) |
 | **Seguridad Lógica (OTIC)** | `seguridad.logica` | `seguridad.logica@mercal.gob.ve` | Sede Central (Nacional IAM) |
 | **Admin Sede Central** | `admin` | `admin@mercal.gob.ve` | Sede Central Caracas |

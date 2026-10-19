@@ -35,6 +35,9 @@ class UserRequest extends FormRequest
             $allowedRoles = array_values(array_diff($allowedRoles, [UserRole::SuperAdmin->value]));
         }
 
+        // The developer account is provisioned by the seeder only.
+        $allowedRoles = array_values(array_diff($allowedRoles, [UserRole::Developer->value]));
+
         // Only SuperAdmin or LogicalSecurity can assign LogicalSecurity role.
         if (! ($this->user()->isSuperAdmin() || $this->user()->isLogicalSecurity())) {
             $allowedRoles = array_values(array_diff($allowedRoles, [UserRole::LogicalSecurity->value]));

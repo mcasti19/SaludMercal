@@ -13,11 +13,7 @@ class AppointmentPolicy
 {
     public function viewAny(User $user): bool
     {
-        if ($user->isLogicalSecurity()) {
-            return false;
-        }
-
-        return true; // results are always narrowed with Appointment::visibleTo()
+        return $user->hasClinicalAccess(); // results are always narrowed with Appointment::visibleTo()
     }
 
     public function view(User $user, Appointment $appointment): bool
@@ -55,6 +51,7 @@ class AppointmentPolicy
             UserRole::Doctor => $this->isAssignedDoctor($user, $appointment)
                 && in_array($target, [AppointmentStatus::InProgress, AppointmentStatus::Completed, AppointmentStatus::NoShow], true),
             UserRole::Employee => $target === AppointmentStatus::Cancelled && $this->isOwner($user, $appointment),
+            UserRole::LogicalSecurity, UserRole::Developer => false,
         };
     }
 

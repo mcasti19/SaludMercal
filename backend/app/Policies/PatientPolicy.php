@@ -10,13 +10,17 @@ class PatientPolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->role->isStaff();
+        return $user->role->isStaff() || ($user->isDeveloper() && $user->hasClinicalAccess());
     }
 
     public function view(User $user, Patient $patient): bool
     {
         if ($user->hasNationalScope()) {
             return true;
+        }
+
+        if ($user->isDeveloper()) {
+            return $user->hasClinicalAccess();
         }
 
         if ($user->role === UserRole::Employee) {

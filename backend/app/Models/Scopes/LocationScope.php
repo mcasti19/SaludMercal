@@ -27,20 +27,29 @@ class LocationScope implements Scope
             return;
         }
 
-        // 2. Employees (own records, via user_id / visibleTo) and logical security
+        // 2. Developer: national, but only while an emergency access is open
+        if ($user->isDeveloper()) {
+            if (! $user->hasClinicalAccess()) {
+                $builder->whereRaw('1 = 0');
+            }
+
+            return;
+        }
+
+        // 3. Employees (own records, via user_id / visibleTo) and logical security
         //    (blocked from clinical data by visibleTo) are not territorial staff.
         if (! $user->role->isStaff() || $user->role === UserRole::Employee) {
             return;
         }
 
-        // 3. Staff without an assigned sede see nothing (fail closed)
+        // 4. Staff without an assigned sede see nothing (fail closed)
         if (is_null($user->location_id)) {
             $builder->whereRaw('1 = 0');
 
             return;
         }
 
-        // 4. Staff members are strictly enclaustered to their assigned location
+        // 5. Staff members are strictly enclaustered to their assigned location
         $builder->where($model->qualifyColumn('location_id'), $user->location_id);
     }
 }
