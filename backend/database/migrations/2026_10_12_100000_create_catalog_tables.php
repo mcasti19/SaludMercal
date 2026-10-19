@@ -25,6 +25,8 @@ return new class extends Migration
             $table->string('address')->nullable();
             $table->string('phone', 30)->nullable();
             $table->boolean('is_headquarters')->default(false)->index();
+            // Sedes with the same group share patient data (e.g. 'caracas': Sede Central, Capital, Vargas).
+            $table->string('location_group', 30)->nullable()->index();
             $table->boolean('is_active')->default(true);
             $table->timestamps();
         });

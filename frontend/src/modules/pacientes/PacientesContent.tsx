@@ -2,11 +2,13 @@
 
 import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Search, Users, RefreshCw, Pencil, Trash2, AlertCircle, Building2, ChevronRight } from "lucide-react";
+import { Plus, Plane, Search, Users, RefreshCw, Pencil, Trash2, AlertCircle, Building2, ChevronRight } from "lucide-react";
 import { usePacientesStore } from "@/modules/pacientes/pacientes.store";
 import { Paciente } from "@/types";
 import { calcularEdad } from "@/lib/utils";
 import { NuevoPacienteModal } from "./NuevoPacienteModal";
+import { ComisionServicioModal } from "./ComisionServicioModal";
+import { useAuthStore } from "@/modules/auth/auth.store";
 
 export function PacientesContent() {
   const router = useRouter();
@@ -20,6 +22,9 @@ export function PacientesContent() {
     isLoading,
     error,
   } = usePacientesStore();
+  const role = useAuthStore((s) => s.user?.role);
+  const canRegisterCommission = role === "RECEPCION" || role === "ADMIN";
+  const [showCommission, setShowCommission] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [pacienteToEdit, setPacienteToEdit] = useState<Paciente | null>(null);
 
@@ -64,6 +69,16 @@ export function PacientesContent() {
             {pacientes.length} pacientes registrados en red nacional · {activos} activos · {inactivos} inactivos
           </p>
         </div>
+        {canRegisterCommission && (
+          <button
+            id="pacientes-comision-btn"
+            onClick={() => setShowCommission(true)}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-sm font-semibold hover:bg-slate-50 dark:hover:bg-slate-700/60 transition-all shrink-0"
+          >
+            <Plane className="w-4 h-4" />
+            Comisión de servicio
+          </button>
+        )}
         <button
           id="pacientes-nuevo-btn"
           onClick={() => { setPacienteToEdit(null); setShowModal(true); }}
@@ -162,6 +177,12 @@ export function PacientesContent() {
                             <span>{p.sede ?? "Nacional"}</span>
                           )}
                         </span>
+                        {p.enComision && (
+                          <span className="mt-1 inline-flex w-fit items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+                            <Plane className="w-3 h-3" />
+                            Visitante · sede de origen
+                          </span>
+                        )}
                         {p.location?.state && !p.isHeadquarters && (
                           <span className="text-slate-500 text-[11px] mt-0.5">{p.location.state}</span>
                         )}
@@ -186,6 +207,9 @@ export function PacientesContent() {
                     </td>
                     <td className="px-5 py-3.5">
                       <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                        {p.enComision ? (
+                          <span className="text-xs text-slate-500">Solo lectura</span>
+                        ) : (<>
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
@@ -209,6 +233,7 @@ export function PacientesContent() {
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
+                        </>)}
                       </div>
                     </td>
                   </tr>
@@ -223,6 +248,13 @@ export function PacientesContent() {
         <p className="text-slate-500 text-xs text-right">
           Mostrando {filtered.length} de {pacientes.length} pacientes
         </p>
+      )}
+
+      {showCommission && (
+        <ComisionServicioModal
+          onClose={() => setShowCommission(false)}
+          onRegistered={() => fetchPacientes()}
+        />
       )}
 
       {showModal && (

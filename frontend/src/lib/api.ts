@@ -168,6 +168,8 @@ export interface ApiPatient {
   emergency_contact_name?: string | null;
   emergency_contact_phone?: string | null;
   is_active: boolean;
+  /** True when the patient belongs to another sede and is only visible here (commission / appointment). */
+  is_visiting?: boolean;
   created_at?: string;
   beneficiaries?: ApiBeneficiary[];
   appointments?: ApiAppointment[];
@@ -273,6 +275,11 @@ export interface ApiReportSummary {
       last_name: string;
       total: number;
     }[];
+    /** Completed appointments held here for patients of another sede, by origin sede. */
+    from_other_sedes: {
+      total: number;
+      by_origin: { id: number | null; name: string; total: number }[];
+    };
   };
   patients: { total: number; active: number };
   medical_leaves: { pending: number; approved_in_range: number };
@@ -832,6 +839,30 @@ export function downloadBlobAsFile(blob: Blob, filename: string): void {
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
+}
+
+// ─── Service commissions (comisión de servicio) ──────────────────────────────
+
+export interface ApiServiceCommission {
+  id: number;
+  reason?: string | null;
+  ended_at?: string | null;
+  created_at?: string;
+  patient: ApiPatient;
+  origin_location: { id: number | null; name: string | null };
+  destination_location: { id: number | null; name: string | null };
+  registered_by?: string | null;
+}
+
+export async function apiRegisterServiceCommission(payload: {
+  national_id: string;
+  reason?: string;
+}): Promise<ApiServiceCommission> {
+  const res = await apiFetch<{ data: ApiServiceCommission }>("/v1/service-commissions", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+  return res.data;
 }
 
 // ─── Emergency access (developer role) ───────────────────────────────────────

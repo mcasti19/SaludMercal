@@ -49,6 +49,20 @@ return new class extends Migration
             $table->index(['patient_id', 'is_active']);
         });
 
+        // Temporary assignment of an employee to another sede (comisión de servicio): the destination
+        // sede can see and attend the patient, who keeps belonging to the origin sede.
+        Schema::create('service_commissions', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('patient_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('location_id')->constrained()->cascadeOnDelete(); // destination sede
+            $table->foreignId('registered_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->string('reason', 500)->nullable();
+            $table->timestamp('ended_at')->nullable();
+            $table->timestamps();
+            $table->index(['patient_id', 'ended_at']);
+            $table->index(['location_id', 'ended_at']);
+        });
+
         Schema::create('doctors', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->nullable()->unique()->constrained()->nullOnDelete();
@@ -107,6 +121,7 @@ return new class extends Migration
         Schema::dropIfExists('doctor_schedules');
         Schema::dropIfExists('doctor_specialty');
         Schema::dropIfExists('doctors');
+        Schema::dropIfExists('service_commissions');
         Schema::dropIfExists('patient_beneficiaries');
         Schema::dropIfExists('patients');
     }

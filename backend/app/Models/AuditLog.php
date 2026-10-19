@@ -41,8 +41,8 @@ class AuditLog extends Model
                 : $query->whereIn('auditable_type', [User::class, EmergencyAccess::class]);
         }
 
-        if ($user->isAdmin() && $user->location_id !== null) {
-            return $query->where('location_id', $user->location_id);
+        if ($user->isAdmin()) {
+            return $query->whereIn('location_id', $user->accessibleLocationIds() ?? []);
         }
 
         return $query->whereRaw('1 = 0');

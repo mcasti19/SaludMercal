@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use App\Enums\UserRole;
 use App\Models\Appointment;
+use App\Models\Patient;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -29,7 +30,12 @@ class StoreAppointmentRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'patient_id' => ['nullable', 'integer', Rule::exists('patients', 'id')->whereNull('deleted_at')],
+            'patient_id' => ['nullable', 'integer', Rule::exists('patients', 'id')->whereNull('deleted_at'), function (string $attribute, mixed $value, \Closure $fail) {
+                // Staff can only book patients visible to them (their sedes' or a service commission).
+                if (! $this->user()->hasRole(UserRole::Employee) && ! Patient::query()->whereKey($value)->exists()) {
+                    $fail('The selected patient is not available in your sede.');
+                }
+            }],
             // The beneficiary must be an active dependant of the patient the appointment is for.
             'beneficiary_id' => ['nullable', 'integer', Rule::exists('patient_beneficiaries', 'id')
                 ->where('patient_id', $this->targetPatientId())

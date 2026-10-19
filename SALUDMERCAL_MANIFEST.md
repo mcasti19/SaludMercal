@@ -53,7 +53,7 @@ Mercal C.A. cuenta con una plantilla humana distribuida en toda la geografía ve
 - **Convalidación Digital de Reposos Médicos:** Flujo digital auditable de solicitud, revisión médica, dictamen y generación automatizada de constancias institucionales en PDF con código QR y serial verificable.
 - **Agenda Médica Inteligente Anti-Solapamiento:** Algoritmo y constraints a nivel de base de datos que impiden dobles reservas para un mismo especialista en el mismo bloque temporal.
 - **Protección de Datos Médicos (IAM Estricto):** Segregación total entre la administración técnica de usuarios (Seguridad Lógica) y la confidencialidad clínica (Médicos/Enfermería).
-- **Multisede con Aislamiento Territorial:** Cobertura de 25 sedes sembradas (Sede Central Caracas, Centro de Distribución La Yaguara y 23 sedes regionales), garantizando que el personal de una sede regional solo administre a pacientes y citas de su jurisdicción geográfica.
+- **Multisede con Aislamiento Territorial:** Cobertura de 25 sedes sembradas: el grupo Caracas (Sede Central, Capital y Vargas, con datos compartidos) y 22 sedes estatales aisladas, garantizando que el personal de una sede regional solo administre a pacientes y citas de su jurisdicción geográfica.
 
 ---
 
@@ -144,7 +144,9 @@ Cualquier cambio o desarrollo futuro en la plataforma debe respetar las siguient
 - Cuando un empleado inicia sesión en el frontend, el sistema detecta su rol y lo redirige automáticamente al **Portal del Empleado** (`/portal`), resolviendo de forma transparente su `patient_id` subyacente.
 
 ### 6.2 Regla de Aislamiento Territorial Multisede (`LocationScope`)
-- Hay 25 sedes sembradas: Sede Central Caracas (`is_headquarters = true`), CD La Yaguara y 23 sedes regionales.
+- Hay 25 sedes sembradas. **Grupo `caracas`** (`locations.location_group`): Sede Central (`is_headquarters = true`), Capital y Vargas. Las sedes de un mismo grupo comparten pacientes, médicos/agendas, citas, reposos, exámenes, usuarios y bitácora (`User::accessibleLocationIds()`); el resto de estados son grupos de una sola sede.
+- **Citas entre sedes:** un trabajador puede pedir cita con un médico de otra sede. La cita pertenece a la sede donde se atiende (`appointments.location_id`) y la sede de origen del paciente la ve siempre (historial completo). La sede de atención ve al paciente solo con datos básicos (`is_visiting`): sin reposos ni exámenes de su sede de origen, y sin poder editarlo.
+- **Comisión de servicio (`service_commissions`):** la recepción (o admin) de la sede destino registra al trabajador por cédula (`POST /service-commissions`); no tiene vencimiento y puede cerrarse (`/end`) por la sede destino o por el admin de la sede de origen. El paciente conserva su sede de origen y puede atenderse en cualquier sede; los reportes de la sede destino cuentan sus citas completadas como **«Citas atendidas de otras sedes»**, desglosadas por sede de origen (`appointments.from_other_sedes` en `/reports/summary`).
 - El scope global `App\Models\Scopes\LocationScope` (trait `BelongsToLocation`) filtra por `location_id` los modelos `Patient`, `Doctor`, `Appointment`, `MedicalLeave` y `MedicalExam` para el staff. Los usuarios (`User`) se filtran manualmente en `UserController`; `PatientBeneficiary`, `AuditLog` y los catálogos no tienen scope. Si un usuario staff tiene `location_id = null`, el scope **no filtra** (ver §11). Los `employee` están exentos del scope (se restringen por `visibleTo`/propiedad).
 - Solo `super_admin` posee exención territorial global para monitoreo nacional.
 
@@ -239,7 +241,7 @@ Base de datos relacional PostgreSQL con integridad referencial estricta:
 | Tabla | Propósito y Descripción | Llaves Foráneas / Relaciones Clave |
 |---|---|---|
 | `users` | Cuentas de acceso, credenciales, políticas IAM (`password_expiration_months`, `session_timeout_minutes`, `must_change_password`, `last_login_*`) y rol. Soft deletes. | `location_id -> locations.id` (nullable) |
-| `locations` | Sedes y centros de salud Mercal a nivel nacional (Sede Central y 24 estados). | — |
+| `locations` | Sedes Mercal; `location_group` agrupa sedes que comparten datos (grupo `caracas`: Sede Central, Capital, Vargas). | — |
 | `departments` | Departamentos organizacionales de Mercal (Logística, Almacén, RRHH, etc.). | — |
 | `specialties` | Especialidades médicas ofertadas (Medicina General, Pediatría, Cardiología, etc.). | — |
 | `patients` | Ficha técnica y médica del paciente/trabajador. | `user_id -> users.id`, `location_id -> locations.id`, `department_id -> departments.id` |
@@ -248,6 +250,7 @@ Base de datos relacional PostgreSQL con integridad referencial estricta:
 | `doctor_specialty` | Tabla pivote para soporte de múltiples especialidades médicas por doctor. | `doctor_id`, `specialty_id` |
 | `doctor_schedules` | Horarios semanales de consulta (día de semana, hora inicio, hora fin). | `doctor_id -> doctors.id` |
 | `doctor_time_offs` | Días no laborables, permisos o vacaciones del médico. | `doctor_id -> doctors.id` |
+| `service_commissions` | Comisiones de servicio: trabajador de otra sede atendido temporalmente en `location_id` (destino). Sin vencimiento; `ended_at` la cierra. | `patient_id`, `location_id`, `registered_by -> users.id` |
 | `appointments` | Citas médicas agendadas, atendidas o canceladas. | `patient_id`, `beneficiary_id`, `doctor_id`, `specialty_id`, `location_id` |
 | `appointment_status_histories` | Trazabilidad de cambios de estado de cada cita médica. | `appointment_id -> appointments.id`, `changed_by -> users.id` |
 | `medical_leaves` | Reposos médicos, diagnósticos, días de incapacidad y dictámenes. | `patient_id`, `doctor_id`, `location_id`, `reviewed_by -> users.id` |

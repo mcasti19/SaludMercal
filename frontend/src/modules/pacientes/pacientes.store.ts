@@ -38,6 +38,7 @@ export function mapApiPatient(p: ApiPatient): Paciente {
       p.location?.name ??
       (p.location_id ? `Sede #${p.location_id}` : undefined),
     isHeadquarters: Boolean(p.location?.is_headquarters),
+    enComision: Boolean(p.is_visiting),
     cargo: p.job_title ?? undefined,
     grupoSanguineo: p.blood_type ?? undefined,
     alergias: p.allergies ?? undefined,

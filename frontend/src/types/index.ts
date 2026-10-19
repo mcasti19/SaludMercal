@@ -99,6 +99,8 @@ export interface Paciente {
   };
   sede?: string;
   isHeadquarters?: boolean;
+  /** Pertenece a otra sede y solo es visible aquí por comisión de servicio o cita. */
+  enComision?: boolean;
   cargo?: string;
   grupoSanguineo?: string;
   alergias?: string;

@@ -54,7 +54,7 @@ class CatalogSeeder extends Seeder
             );
         }
 
-        // Sedes de Mercal a nivel nacional: Sede Central (Caracas) + 23 Estados + Centros Clave
+        // Sedes de Mercal a nivel nacional: Sede Central, Capital y Vargas (grupo 'caracas', datos compartidos) + estados aislados
         $locations = [
             // ── SEDE CENTRAL (Torre Principal Mercal en Caracas) ──────────────
             [
@@ -65,15 +65,17 @@ class CatalogSeeder extends Seeder
                 'address' => 'Av. Andrés Bello, Torre Mercal, Piso 2, Servicio Médico',
                 'phone' => '0212-5051111',
                 'is_headquarters' => true,
+                'location_group' => 'caracas',
             ],
             [
-                'name' => 'Centro de Distribución La Yaguara',
-                'code' => 'CD-YAGUARA',
+                'name' => 'Capital',
+                'code' => 'MED-CAP',
                 'state' => 'Distrito Capital',
                 'city' => 'Caracas',
-                'address' => 'Zona Industrial La Yaguara, Calle 3, Galpón Mercal',
+                'address' => 'Distrito Capital, Caracas, Centro de Atención Mercal',
                 'phone' => '0212-4421098',
                 'is_headquarters' => false,
+                'location_group' => 'caracas',
             ],
             // ── SEDES REGIONALES (23 ESTADOS DE VENEZUELA) ────────────────────
             [
@@ -176,13 +178,14 @@ class CatalogSeeder extends Seeder
                 'is_headquarters' => false,
             ],
             [
-                'name' => 'Sede Mercal La Guaira',
-                'code' => 'MED-LAG',
+                'name' => 'Vargas',
+                'code' => 'MED-VAR',
                 'state' => 'La Guaira',
                 'city' => 'La Guaira',
                 'address' => 'Av. Soublette, Sector Maiquetía, Muelle Pesquero',
                 'phone' => '0212-3314567',
                 'is_headquarters' => false,
+                'location_group' => 'caracas',
             ],
             [
                 'name' => 'Sede Mercal Lara',
@@ -295,6 +298,7 @@ class CatalogSeeder extends Seeder
                     'address' => $loc['address'],
                     'phone' => $loc['phone'] ?? null,
                     'is_headquarters' => $loc['is_headquarters'],
+                    'location_group' => $loc['location_group'] ?? null,
                     'is_active' => true,
                 ]
             );

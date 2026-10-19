@@ -37,9 +37,7 @@ class UserController extends Controller
                     $q->where('location_id', $request->integer('location_id'));
                 }
             }, function ($q) use ($currentUser) {
-                $currentUser->location_id !== null
-                    ? $q->where('location_id', $currentUser->location_id)
-                    : $q->whereRaw('1 = 0');
+                $q->whereIn('location_id', $currentUser->accessibleLocationIds() ?? []);
             })
             ->orderBy('name')
             ->paginate($this->perPage($request));
@@ -62,7 +60,8 @@ class UserController extends Controller
 
         $data = $request->validated();
 
-        if (! $request->user()->hasNationalUserScope()) {
+        // Sede admins create users in their own sede or in another sede of their group.
+        if (! $request->user()->hasNationalUserScope() && ! $request->user()->canAccessLocation($data['location_id'] ?? null)) {
             $data['location_id'] = $request->user()->location_id;
         }
 
@@ -87,7 +86,7 @@ class UserController extends Controller
 
         $data = $request->validated();
 
-        if (! $request->user()->hasNationalUserScope()) {
+        if (! $request->user()->hasNationalUserScope() && ! $request->user()->canAccessLocation($data['location_id'] ?? null)) {
             unset($data['location_id']);
         }
 

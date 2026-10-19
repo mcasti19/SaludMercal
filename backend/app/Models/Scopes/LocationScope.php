@@ -42,14 +42,21 @@ class LocationScope implements Scope
             return;
         }
 
-        // 4. Staff without an assigned sede see nothing (fail closed)
-        if (is_null($user->location_id)) {
+        // 4. Staff are confined to their sede and the sedes of their group (fail closed without sede)
+        $ids = $user->accessibleLocationIds() ?? [];
+
+        if ($ids === []) {
             $builder->whereRaw('1 = 0');
 
             return;
         }
 
-        // 5. Staff members are strictly enclaustered to their assigned location
-        $builder->where($model->qualifyColumn('location_id'), $user->location_id);
+        $builder->where(function (Builder $query) use ($model, $ids) {
+            $query->whereIn($model->qualifyColumn('location_id'), $ids);
+
+            if (method_exists($model, 'extendTerritorialScope')) {
+                $model->extendTerritorialScope($query, $ids);
+            }
+        });
     }
 }

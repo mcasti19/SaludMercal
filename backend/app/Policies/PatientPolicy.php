@@ -27,7 +27,8 @@ class PatientPolicy
             return $patient->user_id === $user->id;
         }
 
-        return $user->role->isStaff() && $user->canAccessLocation($patient->location_id);
+        // Staff reach their group's patients and, read-only, visiting patients (commission / own appointments).
+        return $user->role->isStaff() && Patient::query()->whereKey($patient->getKey())->exists();
     }
 
     public function create(User $user): bool

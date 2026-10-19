@@ -18,6 +18,7 @@ class Location extends Model
         'address',
         'phone',
         'is_headquarters',
+        'location_group',
         'is_active',
     ];
 

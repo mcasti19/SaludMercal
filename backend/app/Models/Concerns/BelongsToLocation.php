@@ -4,6 +4,8 @@ namespace App\Models\Concerns;
 
 use App\Enums\UserRole;
 use App\Models\Location;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\DB;
 use App\Models\Scopes\LocationScope;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -34,6 +36,23 @@ trait BelongsToLocation
                 }
             }
         });
+    }
+
+    /**
+     * Extra visibility granted on top of "the record belongs to one of my sedes". By default a record
+     * tied to a patient is also visible to the sedes the patient belongs to, so the origin sede keeps
+     * seeing what happened to its patients elsewhere.
+     *
+     * @param  list<int>  $locationIds
+     */
+    public function extendTerritorialScope(Builder $query, array $locationIds): void
+    {
+        if (in_array('patient_id', $this->getFillable(), true)) {
+            $query->orWhereIn(
+                $this->qualifyColumn('patient_id'),
+                DB::table('patients')->select('id')->whereIn('location_id', $locationIds),
+            );
+        }
     }
 
     public function location(): BelongsTo

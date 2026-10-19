@@ -35,6 +35,9 @@ class User extends Authenticatable
         'password',
     ];
 
+    /** @var list<int>|null */
+    private ?array $accessibleLocationIds = null;
+
     private bool $emergencyAccessLoaded = false;
 
     private ?EmergencyAccess $activeEmergencyAccess = null;
@@ -145,15 +148,44 @@ class User extends Authenticatable
      */
     public function canAccessLocation(?int $locationId): bool
     {
+        $ids = $this->accessibleLocationIds();
+
+        return $ids === null || ($locationId !== null && in_array($locationId, $ids, true));
+    }
+
+    /**
+     * Sedes whose records the user may reach: their own and every sede of the same group
+     * (e.g. Sede Central, Capital and Vargas). `null` means unrestricted (national scope).
+     *
+     * @return list<int>|null
+     */
+    public function accessibleLocationIds(): ?array
+    {
         if ($this->hasNationalScope()) {
-            return true;
+            return null;
         }
 
         if ($this->isDeveloper()) {
-            return $this->hasClinicalAccess();
+            return $this->hasClinicalAccess() ? null : [];
         }
 
-        return $this->location_id !== null && $this->location_id === $locationId;
+        if ($this->location_id === null) {
+            return [];
+        }
+
+        return $this->accessibleLocationIds ??= $this->resolveLocationGroup();
+    }
+
+    /** @return list<int> */
+    private function resolveLocationGroup(): array
+    {
+        $group = Location::query()->whereKey($this->location_id)->value('location_group');
+
+        if ($group === null) {
+            return [(int) $this->location_id];
+        }
+
+        return Location::query()->where('location_group', $group)->pluck('id')->map(fn ($id) => (int) $id)->all();
     }
 
     public function hasNationalUserScope(): bool

@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\V1\MedicalExamController;
 use App\Http\Controllers\Api\V1\MedicalLeaveController;
 use App\Http\Controllers\Api\V1\PatientController;
 use App\Http\Controllers\Api\V1\ReportController;
+use App\Http\Controllers\Api\V1\ServiceCommissionController;
 use App\Http\Controllers\Api\V1\SpecialtyController;
 use App\Http\Controllers\Api\V1\UserController;
 use Illuminate\Support\Facades\Route;
@@ -43,6 +44,10 @@ Route::prefix('v1')->group(function () {
             Route::apiResource('departments', DepartmentController::class);
             Route::apiResource('locations', LocationController::class);
             Route::apiResource('specialties', SpecialtyController::class);
+
+            Route::get('service-commissions', [ServiceCommissionController::class, 'index']);
+            Route::post('service-commissions', [ServiceCommissionController::class, 'store']);
+            Route::post('service-commissions/{service_commission}/end', [ServiceCommissionController::class, 'end']);
 
             Route::get('patients/me', [PatientController::class, 'me']);
             Route::apiResource('patients', PatientController::class);

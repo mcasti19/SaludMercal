@@ -28,6 +28,7 @@ class LocationRequest extends FormRequest
             'address' => ['nullable', 'string', 'max:255'],
             'phone' => ['nullable', 'string', 'max:30'],
             'is_headquarters' => ['sometimes', 'boolean'],
+            'location_group' => ['nullable', 'string', 'max:30', 'regex:/^[a-z0-9_]+$/'],
             'is_active' => ['sometimes', 'boolean'],
         ];
     }

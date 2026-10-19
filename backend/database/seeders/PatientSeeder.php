@@ -19,7 +19,7 @@ class PatientSeeder extends Seeder
     {
         $defaultPassword = env('SEED_DEFAULT_PASSWORD', 'Password123*');
         $centralLocation = Location::where('is_headquarters', true)->first() ?? Location::first();
-        $yaguaraLocation = Location::where('code', 'CD-YAGUARA')->first() ?? $centralLocation;
+        $capitalLocation = Location::where('code', 'MED-CAP')->first() ?? $centralLocation;
 
         $logisticsDept = Department::where('code', 'LOG')->first() ?? Department::first();
         $hrDept = Department::where('code', 'RRHH')->first() ?? Department::first();
@@ -144,7 +144,7 @@ class PatientSeeder extends Seeder
                 'phone' => '0414-9876543',
                 'email' => 'pedro.castillo@mercal.gob.ve',
                 'department_id' => $warehouseDept?->id,
-                'location_id' => $yaguaraLocation?->id,
+                'location_id' => $capitalLocation?->id,
                 'job_title' => 'Supervisor de Almacén',
                 'blood_type' => 'O+',
                 'allergies' => 'Polvo y ácaros',
@@ -176,7 +176,7 @@ class PatientSeeder extends Seeder
                 'phone' => '0416-7654321',
                 'email' => 'jose.hernandez@mercal.gob.ve',
                 'department_id' => $transportDept?->id,
-                'location_id' => $yaguaraLocation?->id,
+                'location_id' => $capitalLocation?->id,
                 'job_title' => 'Chofer de Carga Pesada',
                 'blood_type' => 'A-',
                 'allergies' => 'Mariscos',
@@ -240,7 +240,7 @@ class PatientSeeder extends Seeder
                 'phone' => '0416-3210987',
                 'email' => 'carmen.alvarado@mercal.gob.ve',
                 'department_id' => $warehouseDept?->id,
-                'location_id' => $yaguaraLocation?->id,
+                'location_id' => $capitalLocation?->id,
                 'job_title' => 'Operadora de Montacargas',
                 'blood_type' => 'A+',
                 'allergies' => 'Látex',

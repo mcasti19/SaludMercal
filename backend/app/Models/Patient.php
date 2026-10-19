@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\DB;
 
 class Patient extends Model
 {
@@ -36,6 +37,27 @@ class Patient extends Model
     protected function fullName(): Attribute
     {
         return Attribute::get(fn () => "{$this->first_name} {$this->last_name}");
+    }
+
+    /**
+     * Besides patients of my sedes, a sede sees (basic data only; their clinical records keep the
+     * origin sede) the patients on an active service commission to it and those it has appointments for.
+     *
+     * @param  list<int>  $locationIds
+     */
+    public function extendTerritorialScope(Builder $query, array $locationIds): void
+    {
+        $query->orWhereIn($this->qualifyColumn('id'), DB::table('service_commissions')
+            ->select('patient_id')->whereIn('location_id', $locationIds)->whereNull('ended_at'));
+
+        $query->orWhereIn($this->qualifyColumn('id'), DB::table('appointments')
+            ->select('patient_id')->whereIn('location_id', $locationIds)->whereNull('deleted_at'));
+    }
+
+    /** Whether the patient belongs to one of the sedes the user can reach (vs. visiting on commission). */
+    public function belongsToSedesOf(User $user): bool
+    {
+        return $user->canAccessLocation($this->location_id);
     }
 
     public function user(): BelongsTo

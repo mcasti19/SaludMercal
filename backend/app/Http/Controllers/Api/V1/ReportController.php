@@ -9,6 +9,8 @@ use App\Models\Appointment;
 use App\Models\MedicalLeave;
 use App\Models\Patient;
 use Barryvdh\DomPDF\Facade\Pdf;
+use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -31,8 +33,7 @@ class ReportController extends Controller
         $from = $filters['date_from'] ?? now()->startOfMonth()->toDateString();
         $to = $filters['date_to'] ?? now()->endOfMonth()->toDateString();
 
-        $range = fn () => Appointment::query()
-            ->visibleTo($request->user())
+        $range = fn () => $this->attendedAppointments($request->user())
             ->whereDate('scheduled_date', '>=', $from)
             ->whereDate('scheduled_date', '<=', $to);
 
@@ -46,7 +47,7 @@ class ReportController extends Controller
                 'total' => $total,
                 'completion_rate' => $total > 0 ? round($completed / $total * 100, 1) : 0.0,
                 'by_status' => collect(AppointmentStatus::values())->mapWithKeys(fn ($s) => [$s => (int) ($byStatus[$s] ?? 0)]),
-                'today' => Appointment::query()->visibleTo($request->user())->whereDate('scheduled_date', now()->toDateString())->count(),
+                'today' => $this->attendedAppointments($request->user())->whereDate('scheduled_date', now()->toDateString())->count(),
                 'by_specialty' => $range()
                     ->join('specialties', 'specialties.id', '=', 'appointments.specialty_id')
                     ->selectRaw('specialties.id, specialties.name, COUNT(*) as total')
@@ -55,14 +56,54 @@ class ReportController extends Controller
                     ->join('doctors', 'doctors.id', '=', 'appointments.doctor_id')
                     ->selectRaw('doctors.id, doctors.first_name, doctors.last_name, COUNT(*) as total')
                     ->groupBy('doctors.id', 'doctors.first_name', 'doctors.last_name')->orderByDesc('total')->get(),
+                'from_other_sedes' => $this->fromOtherSedes($range()),
             ],
-            'patients' => ['total' => Patient::count(), 'active' => Patient::where('is_active', true)->count()],
+            'patients' => ['total' => $this->ownPatients($request->user())->count(), 'active' => $this->ownPatients($request->user())->where('is_active', true)->count()],
             'medical_leaves' => [
                 'pending' => MedicalLeave::where('status', MedicalLeaveStatus::Pending)->count(),
                 'approved_in_range' => MedicalLeave::where('status', MedicalLeaveStatus::Approved)
                     ->whereDate('start_date', '>=', $from)->whereDate('start_date', '<=', $to)->count(),
             ],
         ]]);
+    }
+
+    /** Appointments attended in the sedes the user can reach (not those their patients had elsewhere). */
+    private function attendedAppointments(User $user): Builder
+    {
+        $ids = $user->accessibleLocationIds();
+
+        return Appointment::query()
+            ->visibleTo($user)
+            ->when($ids !== null, fn (Builder $q) => $q->whereIn('appointments.location_id', $ids));
+    }
+
+    /** Patients belonging to the user's sedes (excludes visiting patients that are only visible through scope). */
+    private function ownPatients(User $user): Builder
+    {
+        $ids = $user->accessibleLocationIds();
+
+        return Patient::query()->when($ids !== null, fn (Builder $q) => $q->whereIn('patients.location_id', $ids));
+    }
+
+    /**
+     * "Citas atendidas de otras sedes": completed appointments held here for patients of another sede,
+     * grouped by the patient's origin sede.
+     *
+     * @return array{total:int, by_origin:\Illuminate\Support\Collection}
+     */
+    private function fromOtherSedes(Builder $range): array
+    {
+        $byOrigin = $range
+            ->where('appointments.status', AppointmentStatus::Completed->value)
+            ->join('patients', 'patients.id', '=', 'appointments.patient_id')
+            ->leftJoin('locations as origin', 'origin.id', '=', 'patients.location_id')
+            ->whereRaw('(patients.location_id IS NULL OR patients.location_id <> appointments.location_id)')
+            ->selectRaw("origin.id, COALESCE(origin.name, 'Sin sede') as name, COUNT(*) as total")
+            ->groupBy('origin.id', 'origin.name')
+            ->orderByDesc('total')
+            ->get();
+
+        return ['total' => (int) $byOrigin->sum('total'), 'by_origin' => $byOrigin];
     }
 
     /** Neutralises spreadsheet formula injection (=, +, -, @, tab, CR) in user-provided text. */
@@ -88,8 +129,7 @@ class ReportController extends Controller
         $to = $validated['date_to'] ?? now()->endOfMonth()->toDateString();
 
         if ($format === 'pdf') {
-            $range = fn () => Appointment::query()
-                ->visibleTo($request->user())
+            $range = fn () => $this->attendedAppointments($request->user())
                 ->whereDate('scheduled_date', '>=', $from)
                 ->whereDate('scheduled_date', '<=', $to);
 
@@ -145,8 +185,7 @@ class ReportController extends Controller
         // CSV Export
         $filename = "reporte_saludmercal_{$from}_{$to}.csv";
 
-        $appointments = Appointment::query()
-            ->visibleTo($request->user())
+        $appointments = $this->attendedAppointments($request->user())
             ->whereDate('scheduled_date', '>=', $from)
             ->whereDate('scheduled_date', '<=', $to)
             ->with(['patient.department', 'doctor', 'specialty'])

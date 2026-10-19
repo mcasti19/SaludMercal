@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { OtrasSedesCard } from "./OtrasSedesCard";
 import { useCitasStore } from "@/modules/citas/citas.store";
 import { usePacientesStore } from "@/modules/pacientes/pacientes.store";
 import { useMedicosStore } from "@/modules/medicos/medicos.store";
@@ -135,6 +136,8 @@ export function ReportesContent() {
           </div>
         ))}
       </div>
+
+      <OtrasSedesCard />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Distribución por estado */}
